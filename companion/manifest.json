@@ -3,7 +3,7 @@
 	"name": "your-module-name",
 	"shortname": "module-shortname",
 	"description": "A short one line description of your module",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
 	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
