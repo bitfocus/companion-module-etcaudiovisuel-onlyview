@@ -1,4 +1,4 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
+const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
@@ -10,21 +10,31 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	async init(config) {
-		this.config = config
-
 		this.updateStatus(InstanceStatus.Ok)
 
-		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
-		this.updateVariableDefinitions() // export variable definitions
+		this.updateActions()
+		this.updateFeedbacks()
+		this.updateVariableDefinitions()
+
+		await this.configUpdated(config)
 	}
-	// When module gets deleted
+
 	async destroy() {
-		this.log('debug', 'destroy')
+		if (this.socket) {
+			this.socket.destroy()
+		} else {
+			this.updateStatus(InstanceStatus.Disconnected)
+		}
 	}
 
 	async configUpdated(config) {
+		if (this.socket) {
+			this.socket.destroy()
+			delete this.socket
+		}
+
 		this.config = config
+		this.initTcp()
 	}
 
 	// Return config fields for web config
@@ -57,6 +67,30 @@ class ModuleInstance extends InstanceBase {
 
 	updateVariableDefinitions() {
 		UpdateVariableDefinitions(this)
+	}
+
+	initTcp() {
+		if (this.socket) {
+			this.socket.destroy()
+			delete this.socket
+		}
+
+		this.updateStatus(InstanceStatus.Connecting)
+
+		if (this.config.host) {
+			this.socket = new TCPHelper(this.config.host, this.config.port)
+
+			this.socket.on('status_change', (status, message) => {
+				this.updateStatus(status, message)
+			})
+
+			this.socket.on('error', (err) => {
+				this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
+				this.log('error', 'Network error: ' + err.message)
+			})
+		} else {
+			this.updateStatus(InstanceStatus.BadConfig)
+		}
 	}
 }
 
