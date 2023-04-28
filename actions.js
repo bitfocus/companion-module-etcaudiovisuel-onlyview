@@ -13,19 +13,23 @@ module.exports = function (self) {
         }
     }
 
+    function numberOption(idStr, labelStr) {
+        return {
+            type: 'number',
+            id: idStr,
+            label: labelStr,
+            default: 1,
+            min: 1,
+            max: 999,
+            useVariables: true,
+        }
+    }
+
     self.setActionDefinitions({
         timelinePlayAction: {
             name: 'Timeline play',
             options: [
-                {
-                    type: 'number',
-                    id: 'timelineId',
-                    label: 'Timeline Id',
-                    default: '1',
-                    min: 1,
-                    max: 99,
-                    useVariables: true,
-                },
+                numberOption('timelineId', 'Timeline Id'),
             ],
             callback: async (action) => {
                 const str = 'play*' + action.options.timelineId + '\n'
@@ -36,15 +40,7 @@ module.exports = function (self) {
         timelinePauseAction: {
             name: 'Timeline pause',
             options: [
-                {
-                    type: 'number',
-                    id: 'timelineId',
-                    label: 'Timeline Id',
-                    default: '1',
-                    min: 1,
-                    max: 99,
-                    useVariables: true,
-                },
+                numberOption('timelineId', 'Timeline Id'),
             ],
             callback: async(action) => {
                 const str = 'locate*' + action.options.timelineId + '\n'
