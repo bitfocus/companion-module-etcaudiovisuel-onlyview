@@ -35,6 +35,15 @@ module.exports = function (self) {
     }
 
     self.setActionDefinitions({
+        onlineAction: {
+            name: 'Online Displays',
+            options: [],
+            callback: async(action) => {
+                const str = 'online\n'
+                sendTcp(str)
+            },
+        },
+
         timelinePlayAction: {
             name: 'Timeline play',
             options: [
