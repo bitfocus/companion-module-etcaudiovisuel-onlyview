@@ -27,5 +27,29 @@ module.exports = function (self) {
                 }
             },
         },
+
+        timelinePauseAction: {
+            name: 'Timeline pause',
+            options: [
+                {
+                    type: 'number',
+                    id: 'timelineId',
+                    label: 'Timeline Id',
+                    default: '1',
+                    min: 1,
+                    max: 99,
+                    useVariables: true,
+                },
+            ],
+            callback: async(action) => {
+                const buffer = Buffer.from('locate*' + action.options.timelineId + '\n', 'latin1')
+
+                if (self.socket !== undefined && self.socket.isConnected) {
+                    self.socket.send(buffer)
+                } else {
+                    self.log('debug', 'Socket not connected :(')
+                }
+            },
+        },
     })
 }
