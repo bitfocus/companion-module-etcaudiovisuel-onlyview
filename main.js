@@ -33,14 +33,14 @@ class ModuleInstance extends InstanceBase {
 			{
 				type: 'textinput',
 				id: 'host',
-				label: 'Target IP',
+				label: 'Producer IP',
 				width: 8,
 				regex: Regex.IP,
 			},
 			{
 				type: 'textinput',
 				id: 'port',
-				label: 'Target Port',
+				label: 'Producer Port',
 				width: 4,
 				regex: Regex.PORT,
 			},
