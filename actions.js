@@ -144,8 +144,25 @@ module.exports = function (self) {
             },
         },
 
+        boardGrandMasterAction: {
+            name: 'Board grand master',
+            options: [
+                numberOption('baoardId', 'Board Id', 1, 99, 1),
+                numberOption('value', 'Grand master value', 0, 100, 100),
+                numberOption('fadeTime', 'Fade time (seconds)', 0, 99, 0),
+            ],
+            callback: async(action) => {
+                // Onlyview expects a fade time value in milliseconds.
+                const fadeTime = action.options.fadeTime * 1000
+                const str = 'setBoardGrandMaster*' + action.options.baoardId + '*' +
+                    action.options.value + '*' + fadeTime + '\n'
+                sendTcp(str)
+            },
+        },
+
         quickkeyAction: {
             name: 'Quick key',
+
             options: [
                 numberOption('quickkeyId', 'Quick key Id', 1, 999, 1),
             ],
