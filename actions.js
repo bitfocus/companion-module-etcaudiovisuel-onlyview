@@ -13,14 +13,14 @@ module.exports = function (self) {
         }
     }
 
-    function numberOption(idStr, labelStr) {
+    function numberOption(idStr, labelStr, minValue, maxValue, defaultValue) {
         return {
             type: 'number',
             id: idStr,
             label: labelStr,
-            default: 1,
-            min: 1,
-            max: 999,
+            default: defaultValue,
+            min: minValue,
+            max: maxValue,
             useVariables: true,
         }
     }
@@ -57,7 +57,7 @@ module.exports = function (self) {
         timelinePlayAction: {
             name: 'Timeline play',
             options: [
-                numberOption('timelineId', 'Timeline Id'),
+                numberOption('timelineId', 'Timeline Id', 1, 99, 1),
             ],
             callback: async (action) => {
                 const str = 'play*' + action.options.timelineId + '\n'
@@ -68,7 +68,7 @@ module.exports = function (self) {
         timelinePauseAction: {
             name: 'Timeline pause',
             options: [
-                numberOption('timelineId', 'Timeline Id'),
+                numberOption('timelineId', 'Timeline Id', 1, 99, 1),
             ],
             callback: async(action) => {
                 const str = 'locate*' + action.options.timelineId + '\n'
@@ -79,7 +79,7 @@ module.exports = function (self) {
         timelineOnOffStateAction: {
             name: 'Timeline ON/OFF state',
             options: [
-                numberOption('timelineId', 'Timeline Id'),
+                numberOption('timelineId', 'Timeline Id', 1, 99, 1),
                 stateOption('state', 'ON/OFF state'),
             ],
             callback: async(action) => {
@@ -92,7 +92,7 @@ module.exports = function (self) {
         quickkeyAction: {
             name: 'Quick key',
             options: [
-                numberOption('quickkeyId', 'Quick key Id'),
+                numberOption('quickkeyId', 'Quick key Id', 1, 999, 1),
             ],
             callback: async(action) => {
                 const str = 'launchquickkey*' + action.options.quickkeyId + '\n'
