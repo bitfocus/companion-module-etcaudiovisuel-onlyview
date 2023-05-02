@@ -105,6 +105,21 @@ module.exports = function (self) {
             },
         },
 
+        boardPlayColumnAction: {
+            name: 'Board play column',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                numberOption('columnId', 'Column Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                // Onlyview's API expects board columns Id to start at 0.
+                const column = action.options.columnId - 1
+                // Using '*1*0' as default arguments for the two last one.
+                const str = 'playBoard*' + action.options.boardId + '*' + column + '*1*0\n'
+                sendTcp(str)
+            },
+        },
+
         quickkeyAction: {
             name: 'Quick key',
             options: [
