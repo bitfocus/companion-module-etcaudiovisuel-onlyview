@@ -89,6 +89,17 @@ module.exports = function (self) {
             },
         },
 
+        quickkeyAction: {
+            name: 'Quick key',
+            options: [
+                numberOption('quickkeyId', 'Quick key Id'),
+            ],
+            callback: async(action) => {
+                const str = 'launchquickkey*' + action.options.quickkeyId + '\n'
+                sendTcp(str)
+            },
+        },
+
         testPatternAction: {
             name: 'Test pattern',
             options: [
