@@ -89,6 +89,22 @@ module.exports = function (self) {
             },
         },
 
+        timelineGrandMasterAction: {
+            name: 'Timeline grand master',
+            options: [
+                numberOption('timelineId', 'Timeline Id', 1, 99, 1),
+                numberOption('value', 'Grand master value', 0, 100, 100),
+                numberOption('fadeTime', 'Fade time (seconds)', 0, 99, 0),
+            ],
+            callback: async(action) => {
+                // Onlyview expects a fade time value in milliseconds.
+                const fadeTime = action.options.fadeTime * 1000
+                const str = 'setgrandmaster*' + action.options.timelineId + '*' +
+                    action.options.value + '*' + fadeTime + '\n'
+                sendTcp(str)
+            },
+        },
+
         quickkeyAction: {
             name: 'Quick key',
             options: [
