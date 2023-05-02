@@ -120,6 +120,17 @@ module.exports = function (self) {
             },
         },
 
+        boardNextAction: {
+            name: 'Board play next sequence',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                const str = 'boardPlayNext*' + action.options.boardId + '\n'
+                sendTcp(str)
+            },
+        },
+
         quickkeyAction: {
             name: 'Quick key',
             options: [
