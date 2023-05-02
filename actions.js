@@ -131,6 +131,19 @@ module.exports = function (self) {
             },
         },
 
+        boardOnOffStateAction: {
+            name: 'Board ON/OFF state',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                stateOption('state', 'ON/OFF state'),
+            ],
+            callback: async(action) => {
+                const state = action.options.state ? 1 : 0
+                const str = 'setBoardOn*' + action.options.boardId + '*' + state + '\n'
+                sendTcp(str)
+            },
+        },
+
         quickkeyAction: {
             name: 'Quick key',
             options: [
