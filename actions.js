@@ -148,6 +148,28 @@ module.exports = function (self) {
             },
         },
 
+        boardPlayAction: {
+            name: 'Board play',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async (action) => {
+                const str = 'setBoardPlayState*' + action.options.boardId + '*0*1\n'
+                sendTcp(str)
+            },
+        },
+
+        boardPauseAction: {
+            name: 'Board pause',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async (action) => {
+                const str = 'setBoardPlayState*' + action.options.boardId + '*0*0\n'
+                sendTcp(str)
+            },
+        },
+
         boardPlayColumnAction: {
             name: 'Board play column',
             options: [
