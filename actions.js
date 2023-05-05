@@ -170,6 +170,23 @@ module.exports = function (self) {
             },
         },
 
+        boardEnqueueSequenceAndPresetAction: {
+            name: 'Board enqueue sequence and preset',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                numberOption('columnId', 'Column Id', 1, 99, 1),
+                numberOption('presetId', 'Preset Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                // Onlyview's API expects board columns Id to start at 0.
+                const column = action.options.columnId - 1
+                const preset = action.options.presetId - 1
+                const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' +
+                    column + '*' + preset + '\n'
+                sendTcp(str)
+            },
+        },
+
         boardPlayColumnAction: {
             name: 'Board play column',
             options: [
