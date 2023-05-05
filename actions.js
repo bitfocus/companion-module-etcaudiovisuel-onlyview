@@ -111,6 +111,27 @@ module.exports = function (self) {
             },
         },
 
+        timelineLayerSoloStateAction: {
+            name: 'Timeline layer solo state',
+            options: [
+                numberOption('timelineId', 'Timeline Id', 1, 99, 1),
+                dropDownOption('layerType', 'Layer type', [
+                    {id: 0, label: 'Command layer'},
+                    {id: 1, label: 'Media layer'}],
+                    1),
+                numberOption('layerId', 'Layer Id', 1, 199, 1),
+                stateOption('state', 'Solo state'),
+            ],
+            callback: async(action) => {
+                // Onlyview expects to receive 2 for the media layer type.
+                const ovLayerType = action.options.layerType == 1 ? 2 : 0
+                const state = action.options.state ? 1 : 0
+                const str = 'setlayersolo*' + action.options.timelineId + '*' + ovLayerType +
+                    '*' + action.options.layerId + '*' + state + '\n'
+                sendTcp(str)
+            },
+        },
+
         timelineGrandMasterAction: {
             name: 'Timeline grand master',
             options: [
