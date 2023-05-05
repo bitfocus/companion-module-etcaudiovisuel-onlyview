@@ -209,6 +209,41 @@ module.exports = function (self) {
             },
         },
 
+        boardLayerOnOffStateAction: {
+            name: 'Board layer ON/OFF state',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                numberOption('layerId', 'Layer Id', 1, 199, 1),
+                stateOption('state', 'ON/OFF state'),
+            ],
+            callback: async(action) => {
+                // Onlyview's API expects board layers Id to start at 0.
+                const layer = action.options.layerId - 1
+                // Onlyview expects the blind state, not the ON/OFF layer state.
+                const state = action.options.state ? 0 : 1
+                const str = 'setBoardLayerBlind*' + action.options.boardId + '*' +
+                layer + '*' + state + '\n'
+                sendTcp(str)
+            },
+        },
+
+        boardLayerSoloStateAction: {
+            name: 'Board layer solo state',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                numberOption('layerId', 'Layer Id', 1, 199, 1),
+                stateOption('state', 'ON/OFF state'),
+            ],
+            callback: async(action) => {
+                // Onlyview's API expects board layers Id to start at 0.
+                const layer = action.options.layerId - 1
+                const state = action.options.state ? 1 : 0
+                const str = 'setBoardLayerSolo*' + action.options.boardId + '*' +
+                layer + '*' + state + '\n'
+                sendTcp(str)
+            },
+        },
+
         boardGrandMasterAction: {
             name: 'Board grand master',
             options: [
