@@ -312,5 +312,14 @@ module.exports = function (self) {
                 sendTcp(str)
             },
         },
+
+        shutdownMasterAction: {
+            name: 'Shutdown Master',
+            options: [],
+            callback: async(action) => {
+                const str = 'shutdownmaster\n'
+                sendTcp(str)
+            },
+        }
     })
 }
