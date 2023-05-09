@@ -170,6 +170,21 @@ module.exports = function (self) {
             },
         },
 
+        boardEnqueueSequenceAction: {
+            name: 'Board enqueue sequence',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+                numberOption('columnId', 'Column Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                // Onlyview's API expects board columns Id to start at 0.
+                const column = action.options.columnId - 1
+                const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' +
+                    column + '*-1\n'
+                sendTcp(str)
+            },
+        },
+
         boardEnqueueSequenceAndPresetAction: {
             name: 'Board enqueue sequence and preset',
             options: [
