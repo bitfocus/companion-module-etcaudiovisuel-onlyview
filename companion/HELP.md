@@ -6,21 +6,21 @@ This module allows you to control an [ETC Audiovisuel - Onlyview](https://etc-on
 
 - Online Displays
 - Launch quick key
-- Set test pattern
+- Test pattern
 - Shutdown Master
-- Play timeline
-- Pause timeline
-- Set timeline ON/OFF state
-- Set timeline grand master
-- Set timeline layer ON/OFF state
-- Set timeline layer solo state
-- Play board
-- Pause board
-- Enqueue sequence
-- Enqueue sequence and preset
-- Play board column
-- Play board next sequence
-- Set board ON/OFF state
-- Set board grand master
-- Set board layer ON/OFF state
-- Set board layer solo state
+- Timeline play
+- Timeline pause
+- Timeline ON/OFF state
+- Timeline grand master
+- Timeline layer ON/OFF state
+- Timeline layer solo state
+- Board play
+- Board pause
+- Board enqueue sequence
+- Board enqueue sequence and preset
+- Board play column
+- Board play next sequence
+- Board ON/OFF state
+- Board grand master
+- Board layer ON/OFF state
+- Board layer solo state
