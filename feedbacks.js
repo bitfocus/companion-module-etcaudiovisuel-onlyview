@@ -1,4 +1,4 @@
-const { combineRgb } = require('@companion-module/base')
+/*const { combineRgb } = require('@companion-module/base')
 
 module.exports = async function (self) {
     self.setFeedbackDefinitions({
@@ -31,3 +31,4 @@ module.exports = async function (self) {
         },
     })
 }
+*/

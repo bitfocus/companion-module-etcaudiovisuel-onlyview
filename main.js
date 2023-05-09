@@ -1,8 +1,8 @@
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
-const UpdateFeedbacks = require('./feedbacks')
-const UpdateVariableDefinitions = require('./variables')
+// const UpdateFeedbacks = require('./feedbacks')
+// const UpdateVariableDefinitions = require('./variables')
 
 class ModuleInstance extends InstanceBase {
     constructor(internal) {
@@ -13,8 +13,8 @@ class ModuleInstance extends InstanceBase {
         this.updateStatus(InstanceStatus.Ok)
 
         this.updateActions()
-        this.updateFeedbacks()
-        this.updateVariableDefinitions()
+        // this.updateFeedbacks()
+        // this.updateVariableDefinitions()
 
         await this.configUpdated(config)
     }
@@ -61,13 +61,13 @@ class ModuleInstance extends InstanceBase {
         UpdateActions(this)
     }
 
-    updateFeedbacks() {
+    /*updateFeedbacks() {
         UpdateFeedbacks(this)
-    }
+    }*/
 
-    updateVariableDefinitions() {
+    /*updateVariableDefinitions() {
         UpdateVariableDefinitions(this)
-    }
+    }*/
 
     initTcp() {
         if (this.socket) {
