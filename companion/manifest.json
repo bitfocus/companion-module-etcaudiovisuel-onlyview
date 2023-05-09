@@ -5,8 +5,8 @@
     "description": "",
     "version": "1.0.0",
     "license": "MIT",
-    "repository": "git+https://github.com/bitfocus/companion-module-etc-onlyview.git",
-    "bugs": "https://github.com/bitfocus/companion-module-etc-onlyview/issues",
+    "repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
+    "bugs": "https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview/issues",
     "maintainers": [
         {
             "name": "Guillaume Breda",
