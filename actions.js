@@ -230,13 +230,13 @@ module.exports = function (self) {
             name: 'Board enqueue sequence',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
-                numberOption('columnId', 'Column Id', 1, 99, 1),
+                numberOption('sequenceId', 'Sequence Id', 1, 99, 1),
             ],
             callback: async(action) => {
-                // Onlyview's API expects board columns Id to start at 0.
-                const column = action.options.columnId - 1
+                // Onlyview's API expects board sequences Id to start at 0.
+                const sequence = action.options.sequenceId - 1
                 const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' +
-                    column + '*-1\n'
+                    sequence + '*-1\n'
                 sendTcp(str)
             },
         },
@@ -245,30 +245,30 @@ module.exports = function (self) {
             name: 'Board enqueue sequence and preset',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
-                numberOption('columnId', 'Column Id', 1, 99, 1),
+                numberOption('sequence', 'Sequence Id', 1, 99, 1),
                 numberOption('presetId', 'Preset Id', 1, 99, 1),
             ],
             callback: async(action) => {
-                // Onlyview's API expects board columns Id to start at 0.
-                const column = action.options.columnId - 1
+                // Onlyview's API expects board sequences Id to start at 0.
+                const sequence = action.options.sequenceId - 1
                 const preset = action.options.presetId - 1
                 const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' +
-                    column + '*' + preset + '\n'
+                    sequence + '*' + preset + '\n'
                 sendTcp(str)
             },
         },
 
-        boardPlayColumnAction: {
-            name: 'Board play column',
+        boardPlaySequenceAction: {
+            name: 'Board play sequence',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
-                numberOption('columnId', 'Column Id', 1, 99, 1),
+                numberOption('sequenceId', 'Sequence Id', 1, 99, 1),
             ],
             callback: async(action) => {
-                // Onlyview's API expects board columns Id to start at 0.
-                const column = action.options.columnId - 1
+                // Onlyview's API expects board sequences Id to start at 0.
+                const sequence = action.options.sequenceId - 1
                 // Using '*1*0' as default arguments for the two last one.
-                const str = 'playBoard*' + action.options.boardId + '*' + column + '*1*0\n'
+                const str = 'playBoard*' + action.options.boardId + '*' + sequence + '*1*0\n'
                 sendTcp(str)
             },
         },

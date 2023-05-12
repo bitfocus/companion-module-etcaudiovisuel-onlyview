@@ -18,7 +18,7 @@ This module allows you to control an [ETC Audiovisuel - Onlyview](https://etc-on
 - Board pause
 - Board enqueue sequence
 - Board enqueue sequence and preset
-- Board play column
+- Board play sequence
 - Board play next sequence
 - Board ON/OFF state
 - Board grand master
