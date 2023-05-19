@@ -279,7 +279,8 @@ module.exports = function (self) {
                 numberOption('boardId', 'Board Id', 1, 99, 1),
             ],
             callback: async(action) => {
-                const str = 'boardPlayNext*' + action.options.boardId + '\n'
+                // Using '*0' as default argument for the last one.
+                const str = 'boardPlayNext*' + action.options.boardId + '*0\n'
                 sendTcp(str)
             },
         },
