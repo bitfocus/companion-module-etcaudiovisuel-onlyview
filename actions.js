@@ -285,6 +285,17 @@ module.exports = function (self) {
             },
         },
 
+        boardPreviousAction: {
+            name: 'Board play previous sequence',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                const str = 'boardPlayPrevious*' + action.options.boardId + '\n'
+                sendTcp(str)
+            },
+        },
+
         boardOnOffStateAction: {
             name: 'Board ON/OFF state',
             options: [
