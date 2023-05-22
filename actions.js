@@ -258,6 +258,17 @@ module.exports = function (self) {
             },
         },
 
+        boardPlayEnqueuedSequenceAction: {
+            name: 'Board play enqueued sequence',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                const str = 'boardPlayEnqueuedSequence*' + action.options.boardId + '\n'
+                sendTcp(str)
+            },
+        },
+
         boardPlaySequenceAction: {
             name: 'Board play sequence',
             options: [
