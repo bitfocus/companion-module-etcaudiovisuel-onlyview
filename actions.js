@@ -258,17 +258,6 @@ module.exports = function (self) {
             },
         },
 
-        boardPlayEnqueuedSequenceAction: {
-            name: 'Board play enqueued sequence',
-            options: [
-                numberOption('boardId', 'Board Id', 1, 99, 1),
-            ],
-            callback: async(action) => {
-                const str = 'boardPlayEnqueuedSequence*' + action.options.boardId + '\n'
-                sendTcp(str)
-            },
-        },
-
         boardPlaySequenceAction: {
             name: 'Board play sequence',
             options: [
@@ -286,6 +275,18 @@ module.exports = function (self) {
 
         boardNextAction: {
             name: 'Board play next sequence',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
+                // Using '*1' as default argument for the last one.
+                const str = 'boardPlayNext*' + action.options.boardId + '*1\n'
+                sendTcp(str)
+            },
+        },
+
+        boardNextEnqueuedAction: {
+            name: 'Board play next enqueued sequence',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
             ],
