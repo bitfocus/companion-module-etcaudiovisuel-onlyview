@@ -279,6 +279,18 @@ module.exports = function (self) {
                 numberOption('boardId', 'Board Id', 1, 99, 1),
             ],
             callback: async(action) => {
+                // Using '*0' as default argument for the last one.
+                const str = 'boardPlayNext*' + action.options.boardId + '*0\n'
+                sendTcp(str)
+            },
+        },
+
+        boardNextSequenceAction: {
+            name: 'Board play next sequence (sequence + 1)',
+            options: [
+                numberOption('boardId', 'Board Id', 1, 99, 1),
+            ],
+            callback: async(action) => {
                 // Using '*1' as default argument for the last one.
                 const str = 'boardPlayNext*' + action.options.boardId + '*1\n'
                 sendTcp(str)
@@ -286,13 +298,13 @@ module.exports = function (self) {
         },
 
         boardNextEnqueuedAction: {
-            name: 'Board play next enqueued sequence',
+            name: 'Board play next sequence (enqueued sequence)',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
             ],
             callback: async(action) => {
-                // Using '*0' as default argument for the last one.
-                const str = 'boardPlayNext*' + action.options.boardId + '*0\n'
+                // Using '*2' as default argument for the last one.
+                const str = 'boardPlayNext*' + action.options.boardId + '*2\n'
                 sendTcp(str)
             },
         },
