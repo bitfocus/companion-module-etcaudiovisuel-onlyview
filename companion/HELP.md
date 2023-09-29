@@ -20,8 +20,9 @@ This module allows you to control an [ETC Audiovisuel - Onlyview](https://etc-on
 - Board enqueue sequence and preset
 - Board play sequence
 - Board play next sequence
+- Board play next sequence (sequence + 1)
+- Board play next sequence (enqueued sequence)
 - Board play previous sequence
-- Board play enqueued sequence
 - Board ON/OFF state
 - Board grand master
 - Board layer ON/OFF state
