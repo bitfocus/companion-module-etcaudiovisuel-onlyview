@@ -62,7 +62,7 @@ module.exports = function (self) {
         },
 
         quickkeyAction: {
-            name: 'Quick key',
+            name: 'Launch quick key',
 
             options: [
                 numberOption('quickkeyId', 'Quick key Id', 1, 999, 1),
