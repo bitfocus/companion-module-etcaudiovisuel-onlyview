@@ -245,7 +245,7 @@ module.exports = function (self) {
             name: 'Board enqueue sequence and preset',
             options: [
                 numberOption('boardId', 'Board Id', 1, 99, 1),
-                numberOption('sequence', 'Sequence Id', 1, 99, 1),
+                numberOption('sequenceId', 'Sequence Id', 1, 99, 1),
                 numberOption('presetId', 'Preset Id', 1, 99, 1),
             ],
             callback: async(action) => {
