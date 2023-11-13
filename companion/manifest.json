@@ -1,8 +1,8 @@
 {
-    "id": "companion-module-etc-onlyview",
-    "name": "companion-module-etc-onlyview",
+    "id": "etcaudiovisuel-onlyview",
+    "name": "etcaudiovisuel-onlyview",
     "shortname": "Onlyview",
-    "description": "",
+    "description": "Onlyview plugin for Companion",
     "version": "1.0.0",
     "license": "MIT",
     "repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
@@ -22,5 +22,5 @@
     "legacyIds": [],
     "manufacturer": "ETC Audiovisuel",
     "products": ["Onlyview"],
-    "keywords": []
+    "keywords": ["Media Server"]
 }

@@ -8,7 +8,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/bitfocus/companion-module-etc-onlyview.git"
+        "url": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git"
     },
     "dependencies": {
         "@companion-module/base": "~1.4.0"
