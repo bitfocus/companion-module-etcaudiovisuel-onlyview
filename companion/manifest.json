@@ -3,7 +3,7 @@
     "name": "etcaudiovisuel-onlyview",
     "shortname": "Onlyview",
     "description": "Onlyview plugin for Companion",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
     "bugs": "https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview/issues",
