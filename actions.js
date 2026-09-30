@@ -1,3 +1,26 @@
+// HH:MM:SS or HH:MM:SS:FF. Producer checks the frame against the show framerate.
+const TIMECODE_REGEX_STRING = '/^\\d{1,2}:[0-5]\\d:[0-5]\\d(:\\d{1,3})?$/'
+const TIMECODE_REGEX = /^\d{1,2}:[0-5]\d:[0-5]\d(:\d{1,3})?$/
+
+// audio_types.h in Onlyview.
+const VOLUME_MIN_DB = -80
+const VOLUME_MAX_DB = 6
+
+const TEST_PATTERN_CHOICES = [
+	{ id: 0, label: 'None' },
+	{ id: 1, label: 'Small pattern' },
+	{ id: 2, label: 'Horizontal black level' },
+	{ id: 3, label: 'Vertical black level' },
+	{ id: 4, label: 'Tile' },
+	{ id: 5, label: 'Onlyview logo' },
+	{ id: 6, label: 'SMPTE HD color bar' },
+	{ id: 7, label: 'SMPTE SD color bar' },
+	{ id: 8, label: 'OSD' },
+	{ id: 9, label: 'Framerate (CPU)' },
+	{ id: 10, label: 'Framerate (GPU)' },
+	{ id: 11, label: 'White' },
+]
+
 export default function (self) {
 	// Sends a network message using the TCP socket.
 	function sendTcp(str) {
@@ -41,6 +64,60 @@ export default function (self) {
 		return Math.min(100, Math.max(0, value))
 	}
 
+	// Producer asserts the audio volume range. Its UI shows 2 decimals.
+	function volumeDb(value) {
+		const clamped = Math.min(VOLUME_MAX_DB, Math.max(VOLUME_MIN_DB, Number(value)))
+		return Math.round(clamped * 100) / 100
+	}
+
+	// Producer converts the timecode with the show framerate.
+	function timecodeText(action, actionName) {
+		const text = String(action.options.timecode ?? '').trim()
+		if (!TIMECODE_REGEX.test(text)) {
+			self.log('warn', actionName + ': invalid timecode "' + text + '", use HH:MM:SS or HH:MM:SS:FF')
+			return undefined
+		}
+		return text
+	}
+
+	// Empty or 0 means all the Displays.
+	function sendDisplaysCommand(command, displayIdValue) {
+		if (displayIdValue === undefined || displayIdValue === '' || Number(displayIdValue) === 0) {
+			sendTcp(command + '\n')
+			return
+		}
+		const displayId = Number(displayIdValue)
+		if (!Number.isInteger(displayId) || displayId < 0) {
+			self.log('warn', command + ': invalid Display Id "' + displayIdValue + '"')
+			return
+		}
+		sendTcp(command + '*' + displayId + '\n')
+	}
+
+	function displayIdOrAllOption() {
+		return { ...numberOption('displayId', 'Display Id (0 = all)', 0, 999, 0), asInteger: true }
+	}
+
+	function timecodeOption() {
+		return {
+			type: 'textinput',
+			id: 'timecode',
+			label: 'Timecode (HH:MM:SS or HH:MM:SS:FF)',
+			default: '00:00:00:00',
+			regex: TIMECODE_REGEX_STRING,
+			useVariables: true,
+			description: 'FF is a frame number, in the show framerate.',
+		}
+	}
+
+	function volumeOption() {
+		return {
+			...numberOption('volume', 'Volume (dBFS)', VOLUME_MIN_DB, VOLUME_MAX_DB, 0),
+			step: 0.01,
+			clampValues: true,
+		}
+	}
+
 	// Creates a state (boolean) option giving the desired parameters.
 	function stateOption(idStr, labelStr) {
 		return {
@@ -67,10 +144,17 @@ export default function (self) {
 
 		onlineAction: {
 			name: 'Online Displays',
-			options: [],
+			options: [displayIdOrAllOption()],
 			callback: async (action) => {
-				const str = 'online\n'
-				sendTcp(str)
+				sendDisplaysCommand('online', action.options.displayId)
+			},
+		},
+
+		offlineAction: {
+			name: 'Offline Displays',
+			options: [displayIdOrAllOption()],
+			callback: async (action) => {
+				sendDisplaysCommand('offline', action.options.displayId)
 			},
 		},
 
@@ -86,29 +170,25 @@ export default function (self) {
 
 		testPatternAction: {
 			name: 'Test pattern',
-			options: [
-				dropDownOption(
-					'testPatternId',
-					'Test pattern',
-					[
-						{ id: 0, label: 'None' },
-						{ id: 1, label: 'Small pattern' },
-						{ id: 2, label: 'Horizontal black level' },
-						{ id: 3, label: 'Vertical black level' },
-						{ id: 4, label: 'Tile' },
-						{ id: 5, label: 'Onlyview logo' },
-						{ id: 6, label: 'SMPTE HD color bar' },
-						{ id: 7, label: 'SMPTE SD color bar' },
-						{ id: 8, label: 'OSD' },
-						{ id: 9, label: 'Framerate (CPU)' },
-						{ id: 10, label: 'Framerate (GPU)' },
-						{ id: 11, label: 'White' },
-					],
-					0,
-				),
-			],
+			options: [dropDownOption('testPatternId', 'Test pattern', TEST_PATTERN_CHOICES, 0)],
 			callback: async (action) => {
 				const str = 'setpattern*' + action.options.testPatternId + '\n'
+				sendTcp(str)
+			},
+		},
+
+		overrideTestPatternAction: {
+			name: 'Override test pattern on output',
+			options: [
+				idOption('displayId', 'Display Id', 999),
+				idOption('outputId', 'Output', 99),
+				dropDownOption('testPatternId', 'Test pattern', TEST_PATTERN_CHOICES, 0),
+			],
+			callback: async (action) => {
+				// Onlyview's API expects output ids to start at 0.
+				const output = action.options.outputId - 1
+				const str =
+					'setoverridepattern*' + action.options.displayId + '*' + output + '*' + action.options.testPatternId + '\n'
 				sendTcp(str)
 			},
 		},
@@ -139,6 +219,28 @@ export default function (self) {
 			callback: async (action) => {
 				const str = 'locate*' + action.options.timelineId + '\n'
 				sendTcp(str)
+			},
+		},
+
+		timelineLocateAction: {
+			name: 'Timeline locate',
+			description: 'Goes to the timecode and pauses.',
+			options: [idOption('timelineId', 'Timeline Id', 99), timecodeOption()],
+			callback: async (action) => {
+				const timecode = timecodeText(action, 'Timeline locate')
+				if (timecode === undefined) return
+				sendTcp('locate*' + action.options.timelineId + '*tc=' + timecode + '\n')
+			},
+		},
+
+		timelineLocateAndPlayAction: {
+			name: 'Timeline locate and play',
+			description: 'Goes to the timecode and plays.',
+			options: [idOption('timelineId', 'Timeline Id', 99), timecodeOption()],
+			callback: async (action) => {
+				const timecode = timecodeText(action, 'Timeline locate and play')
+				if (timecode === undefined) return
+				sendTcp('play*' + action.options.timelineId + '*tc=' + timecode + '\n')
 			},
 		},
 
@@ -292,12 +394,21 @@ export default function (self) {
 
 		boardPlaySequenceAction: {
 			name: 'Board play sequence',
-			options: [idOption('boardId', 'Board Id', 99), idOption('sequenceId', 'Sequence Id', 999)],
+			options: [
+				idOption('boardId', 'Board Id', 99),
+				idOption('sequenceId', 'Sequence Id', 999),
+				{ ...stateOption('overridePreset', 'Override preset'), default: false, disableAutoExpression: true },
+				{ ...idOption('presetId', 'Preset Id', 99), isVisibleExpression: '$(options:overridePreset)' },
+				{ ...stateOption('clearQueue', 'Clear queue'), default: false },
+			],
 			callback: async (action) => {
-				// Onlyview's API expects board sequences Id to start at 0.
+				// Onlyview's API expects board sequences and presets Id to start at 0.
 				const sequence = action.options.sequenceId - 1
-				// Using '*1*0' as default arguments for the two last one.
-				const str = 'playBoard*' + action.options.boardId + '*' + sequence + '*1*0\n'
+				// -1 means no preset override.
+				const preset = action.options.overridePreset ? action.options.presetId - 1 : -1
+				const clearQueue = action.options.clearQueue ? 1 : 0
+				// allowCrossfade = 1, locator = 0 (main).
+				const str = 'playBoard*' + action.options.boardId + '*' + sequence + '*1*0*' + preset + '*' + clearQueue + '\n'
 				sendTcp(str)
 			},
 		},
@@ -402,6 +513,76 @@ export default function (self) {
 				const layer = action.options.layerId - 1
 				const state = action.options.state ? 1 : 0
 				const str = 'setBoardLayerSolo*' + action.options.boardId + '*' + layer + '*' + state + '\n'
+				sendTcp(str)
+			},
+		},
+
+		// - Audio actions -
+
+		audioOutputVolumeAction: {
+			name: 'Audio output volume',
+			options: [idOption('displayId', 'Display Id', 999), idOption('outputId', 'Output', 99), volumeOption()],
+			callback: async (action) => {
+				// Onlyview's API expects output ids to start at 0.
+				const output = action.options.outputId - 1
+				const str =
+					'updatescreenoutputaudiovolume*' +
+					action.options.displayId +
+					'*' +
+					output +
+					'*' +
+					volumeDb(action.options.volume) +
+					'\n'
+				sendTcp(str)
+			},
+		},
+
+		audioChannelStateAction: {
+			name: 'Audio channel state',
+			description: 'Sets the volume, the mute and the test signal of the channel, all together.',
+			options: [
+				idOption('displayId', 'Display Id', 999),
+				idOption('outputId', 'Output', 99),
+				idOption('channel', 'Channel', 128),
+				volumeOption(),
+				{ ...stateOption('mute', 'Mute'), default: false },
+				{ ...stateOption('signalTest', 'Play the test signal'), default: false },
+			],
+			callback: async (action) => {
+				// Onlyview's API expects output and channel ids to start at 0.
+				const output = action.options.outputId - 1
+				const channel = action.options.channel - 1
+				const mute = action.options.mute ? 1 : 0
+				const signalTest = action.options.signalTest ? 1 : 0
+				const str =
+					'updateaudiochannelstate*' +
+					action.options.displayId +
+					'*' +
+					output +
+					'*' +
+					channel +
+					'*' +
+					volumeDb(action.options.volume) +
+					'*' +
+					mute +
+					'*' +
+					signalTest +
+					'\n'
+				sendTcp(str)
+			},
+		},
+
+		// - Action graph actions -
+
+		actionGraphEventAction: {
+			name: 'Trigger action graph event',
+			description: 'Fires an "On Action" node.',
+			options: [
+				idOption('graphId', 'Action graph Id', 9999),
+				{ ...numberOption('nodeId', 'Node Id', 0, 99999, 0), asInteger: true },
+			],
+			callback: async (action) => {
+				const str = 'actionGraphNodeEvent*actionEvent*' + action.options.graphId + '*' + action.options.nodeId + '\n'
 				sendTcp(str)
 			},
 		},

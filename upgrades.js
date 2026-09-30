@@ -6,7 +6,7 @@ import {
 // Option ids of the number fields that had `useVariables: true` in base 1.x.
 // The script matches them on every action: never reuse these ids for an
 // option that is not a number.
-const NUMERIC_OPTION_IDS = [
+export const NUMERIC_OPTION_IDS = [
 	'quickkeyId',
 	'timelineId',
 	'value',
@@ -17,7 +17,7 @@ const NUMERIC_OPTION_IDS = [
 	'sequenceId',
 	'presetId',
 ]
-const BOOLEAN_OPTION_IDS = ['state']
+export const BOOLEAN_OPTION_IDS = ['state']
 
 function sameValue(a, b) {
 	return a?.isExpression === b?.isExpression && a?.value === b?.value
