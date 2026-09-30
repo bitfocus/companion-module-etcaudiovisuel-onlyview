@@ -10,6 +10,8 @@ export function createFakeContext() {
 		feedbackDefinitions: {},
 		variableDefinitions: {},
 		variableValues: {},
+		// Each setVariableValues call, to check the batching.
+		variableValueCalls: [],
 		checkedFeedbacks: [],
 	}
 
@@ -36,7 +38,10 @@ export function createFakeContext() {
 		setPresetDefinitions: () => {},
 		setCompositeElementDefinitions: () => {},
 		setVariableDefinitions: (defs) => (recorded.variableDefinitions = defs),
-		setVariableValues: (values) => Object.assign(recorded.variableValues, values),
+		setVariableValues: (values) => {
+			recorded.variableValueCalls.push(values)
+			Object.assign(recorded.variableValues, values)
+		},
 		getVariableValue: (id) => recorded.variableValues[id],
 		sharedUdpSocketJoin: async () => '',
 		sharedUdpSocketLeave: async () => {},
@@ -47,9 +52,11 @@ export function createFakeContext() {
 }
 
 // Creates a module instance outside Companion.
-export async function createModule(config) {
+// `setup(instance)` runs before init, for example to shorten the timings.
+export async function createModule(config, setup) {
 	const { context, recorded } = createFakeContext()
 	const instance = new ModuleInstance(context)
+	setup?.(instance)
 	await instance.init(config)
 	return { instance, recorded }
 }
