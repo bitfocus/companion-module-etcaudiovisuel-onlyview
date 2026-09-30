@@ -1,6 +1,7 @@
 import { InstanceBase, Regex, InstanceStatus, TCPHelper } from '@companion-module/base'
 import { UpgradeScripts } from './upgrades.js'
 import UpdateActions from './actions.js'
+import UpdateFeedbacks, { feedbacksForChanges } from './feedbacks.js'
 import { OnlyviewState, ChangeKind, Protocol } from './state.js'
 import { definedObjects, variableDefinitions, variableValues } from './variables.js'
 
@@ -44,6 +45,7 @@ export default class ModuleInstance extends InstanceBase {
 
 	async init(config) {
 		this.updateActions()
+		this.updateFeedbacks()
 		this.updateDefinitions()
 
 		await this.configUpdated(config)
@@ -91,6 +93,19 @@ export default class ModuleInstance extends InstanceBase {
 
 	updateActions() {
 		UpdateActions(this)
+	}
+
+	updateFeedbacks() {
+		UpdateFeedbacks(this)
+	}
+
+	// Connected, and Producer replies, with or without the state push.
+	isProducerAlive() {
+		return (
+			this.tcpStatus === InstanceStatus.Ok &&
+			!this.noReply &&
+			(this.protocol === Protocol.Subscribed || this.protocol === Protocol.Legacy)
+		)
 	}
 
 	initTcp() {
@@ -322,8 +337,11 @@ export default class ModuleInstance extends InstanceBase {
 		this.stateChanged(changes)
 	}
 
-	// Hook for the feedbacks. `changes` is a Set of ChangeKind.
-	stateChanged(_changes) {}
+	// `changes` is a Set of ChangeKind.
+	stateChanged(changes) {
+		const ids = feedbacksForChanges(changes)
+		if (ids.length > 0) this.checkFeedbacks(...ids)
+	}
 
 	scheduleDefinitions() {
 		if (this.definitionsTimer) return

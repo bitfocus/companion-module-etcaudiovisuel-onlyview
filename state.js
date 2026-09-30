@@ -101,7 +101,8 @@ export class OnlyviewState {
 	timeline(id, now) {
 		let t = this.timelines.get(id)
 		if (!t) {
-			t = { id, name: '', on: false, tc: 0, receivedAt: now, gm: 0, playing: false, layers: new Map() }
+			// `known` is false until the state line: a name or layer line creates a placeholder.
+			t = { id, name: '', known: false, on: false, tc: 0, receivedAt: now, gm: 0, playing: false, layers: new Map() }
 			this.timelines.set(id, t)
 			this.changes.add(ChangeKind.Structure)
 		}
@@ -114,6 +115,7 @@ export class OnlyviewState {
 			b = {
 				id,
 				name: '',
+				known: false,
 				on: false,
 				tc: 0,
 				receivedAt: now,
@@ -134,7 +136,7 @@ export class OnlyviewState {
 	screen(id) {
 		let s = this.screens.get(id)
 		if (!s) {
-			s = { id, name: '', status: ScreenStatus.Idle }
+			s = { id, name: '', known: false, status: ScreenStatus.Idle }
 			this.screens.set(id, s)
 			this.changes.add(ChangeKind.Structure)
 		}
@@ -164,6 +166,7 @@ const HANDLERS = {
 		const tc = toNumber(fields[3])
 		if (id === undefined || tc === undefined || fields.length < 6) return
 		const t = state.timeline(id, now)
+		t.known = true
 		t.on = fields[2] === '1'
 		t.tc = tc
 		t.receivedAt = now
@@ -198,6 +201,7 @@ const HANDLERS = {
 		const tc = toNumber(fields[3])
 		if (id === undefined || tc === undefined || fields.length < 7) return
 		const b = state.board(id, now)
+		b.known = true
 		b.on = fields[2] === '1'
 		b.tc = tc
 		b.receivedAt = now
@@ -240,7 +244,9 @@ const HANDLERS = {
 		const id = toInt(fields[1])
 		const status = toInt(fields[2])
 		if (id === undefined || status === undefined) return
-		state.screen(id).status = status
+		const s = state.screen(id)
+		s.known = true
+		s.status = status
 		state.changes.add(ChangeKind.Screen)
 	},
 
