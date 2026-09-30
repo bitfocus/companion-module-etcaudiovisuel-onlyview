@@ -1,97 +1,85 @@
-const { InstanceBase, Regex, runEntrypoint, InstanceStatus, TCPHelper } = require('@companion-module/base')
-const UpgradeScripts = require('./upgrades')
-const UpdateActions = require('./actions')
-// const UpdateFeedbacks = require('./feedbacks')
-// const UpdateVariableDefinitions = require('./variables')
+import { InstanceBase, Regex, InstanceStatus, TCPHelper } from '@companion-module/base'
+import { UpgradeScripts } from './upgrades.js'
+import UpdateActions from './actions.js'
 
-class ModuleInstance extends InstanceBase {
-    constructor(internal) {
-        super(internal)
-    }
+export { UpgradeScripts }
 
-    async init(config) {
-        this.updateStatus(InstanceStatus.Ok)
+export default class ModuleInstance extends InstanceBase {
+	constructor(internal) {
+		super(internal)
+	}
 
-        this.updateActions()
-        // this.updateFeedbacks()
-        // this.updateVariableDefinitions()
+	async init(config) {
+		this.updateStatus(InstanceStatus.Ok)
 
-        await this.configUpdated(config)
-    }
+		this.updateActions()
 
-    async destroy() {
-        if (this.socket) {
-            this.socket.destroy()
-        } else {
-            this.updateStatus(InstanceStatus.Disconnected)
-        }
-    }
+		await this.configUpdated(config)
+	}
 
-    async configUpdated(config) {
-        if (this.socket) {
-            this.socket.destroy()
-            delete this.socket
-        }
+	async destroy() {
+		if (this.socket) {
+			this.socket.destroy()
+		} else {
+			this.updateStatus(InstanceStatus.Disconnected)
+		}
+	}
 
-        this.config = config
-        this.initTcp()
-    }
+	async configUpdated(config) {
+		if (this.socket) {
+			this.socket.destroy()
+			delete this.socket
+		}
 
-    // Return config fields for web config
-    getConfigFields() {
-        return [
-            {
-                type: 'textinput',
-                id: 'host',
-                label: 'Producer IP',
-                width: 8,
-                regex: Regex.IP,
-            },
-            {
-                type: 'textinput',
-                id: 'port',
-                label: 'Producer Port',
-                width: 4,
-                regex: Regex.PORT,
-            },
-        ]
-    }
+		this.config = config
+		this.initTcp()
+	}
 
-    updateActions() {
-        UpdateActions(this)
-    }
+	// Return config fields for web config
+	getConfigFields() {
+		return [
+			{
+				type: 'textinput',
+				id: 'host',
+				label: 'Producer IP',
+				width: 8,
+				regex: Regex.IP,
+			},
+			{
+				type: 'textinput',
+				id: 'port',
+				label: 'Producer Port',
+				width: 4,
+				regex: Regex.PORT,
+			},
+		]
+	}
 
-    /*updateFeedbacks() {
-        UpdateFeedbacks(this)
-    }*/
+	updateActions() {
+		UpdateActions(this)
+	}
 
-    /*updateVariableDefinitions() {
-        UpdateVariableDefinitions(this)
-    }*/
+	initTcp() {
+		if (this.socket) {
+			this.socket.destroy()
+			delete this.socket
+		}
 
-    initTcp() {
-        if (this.socket) {
-            this.socket.destroy()
-            delete this.socket
-        }
+		this.updateStatus(InstanceStatus.Connecting)
 
-        this.updateStatus(InstanceStatus.Connecting)
+		if (this.config.host) {
+			this.socket = new TCPHelper(this.config.host, this.config.port)
 
-        if (this.config.host) {
-            this.socket = new TCPHelper(this.config.host, this.config.port)
+			this.socket.on('status_change', (status, message) => {
+				this.updateStatus(status, message)
+			})
 
-            this.socket.on('status_change', (status, message) => {
-                this.updateStatus(status, message)
-            })
-
-            this.socket.on('error', (err) => {
-                this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
-                this.log('error', 'Network error: ' + err.message)
-            })
-        } else {
-            this.updateStatus(InstanceStatus.BadConfig)
-        }
-    }
+			this.socket.on('error', (err) => {
+				this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
+				this.log('error', 'Network error: ' + err.message)
+			})
+		} else {
+			this.updateStatus(InstanceStatus.BadConfig)
+		}
+	}
 }
-
-runEntrypoint(ModuleInstance, UpgradeScripts)

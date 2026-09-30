@@ -1,26 +1,32 @@
 {
-    "id": "etcaudiovisuel-onlyview",
-    "name": "etcaudiovisuel-onlyview",
-    "shortname": "Onlyview",
-    "description": "Onlyview plugin for Companion",
-    "version": "1.0.1",
-    "license": "MIT",
-    "repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
-    "bugs": "https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview/issues",
-    "maintainers": [
-        {
-            "name": "Guillaume Breda",
-            "email": "breda.guillaume@gmail.com"
-        }
-    ],
-    "runtime": {
-        "type": "node18",
-        "api": "nodejs-ipc",
-        "apiVersion": "18.16.0",
-        "entrypoint": "../main.js"
-    },
-    "legacyIds": [],
-    "manufacturer": "ETC Audiovisuel",
-    "products": ["Onlyview"],
-    "keywords": ["Media Server"]
+	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
+	"type": "connection",
+	"id": "etcaudiovisuel-onlyview",
+	"name": "etcaudiovisuel-onlyview",
+	"shortname": "Onlyview",
+	"description": "Onlyview plugin for Companion",
+	"version": "1.0.1",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
+	"bugs": "https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview/issues",
+	"maintainers": [
+		{
+			"name": "Guillaume Breda",
+			"email": "breda.guillaume@gmail.com"
+		},
+		{
+			"name": "Arnaud Masserann",
+			"email": "a.masserann@etc-onlyview.com"
+		}
+	],
+	"runtime": {
+		"type": "node22",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../main.js"
+	},
+	"legacyIds": [],
+	"manufacturer": "ETC Audiovisuel",
+	"products": ["Onlyview"],
+	"keywords": ["Media Server"]
 }
