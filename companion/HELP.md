@@ -6,6 +6,7 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 
 - Companion 4.3 or later.
 - Onlyview Producer. An action only works if your Onlyview version has the matching feature: for example, board actions need a version with boards.
+- The variables need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty.
 
 ### Setup
 
@@ -15,7 +16,12 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
    - **Producer IP**: the IP address of the Producer computer.
    - **Producer Port**: `3055`. Producer always listens on this port. Change it only if a NAT or a port forward sits between Companion and Producer.
 
-The connection status is green only when the TCP connection to Producer is open.
+The connection status:
+
+- **Green**: connected, and Producer replies.
+- **Yellow, "Producer too old for variables, or Accept remote commands is off"**: Producer did not reply to `subscribe` within 2 seconds. The actions still work, but the variables stay empty, and the locates with a timecode log a warning.
+- **Yellow, "No reply from Producer"**: the module sends `checkalive` every 2 seconds. Producer did not reply for 5 seconds, so the module reconnects. The most common cause is _Accept remote commands_ turned off.
+- **Red** or **Connecting**: no TCP connection.
 
 ### Finding the ids
 
@@ -34,15 +40,76 @@ All number fields can also be set with an expression, for example `$(custom:boar
 
 ### Timecodes
 
-The locate actions take a timecode as text: `HH:MM:SS:FF` or `HH:MM:SS`, for example `00:01:30:12`. `FF` is a frame number, in the framerate of the show. Producer converts the timecode, like the timecode display of the timeline:
+The locate actions take a timecode as text: `HH:MM:SS:FF` or `HH:MM:SS`, for example `00:01:30:12`. `FF` is a frame number, in the framerate of the show. Timecodes match what Producer shows on the timeline:
 
-- 29.97 and 59.94 fps use drop frame.
-- Other framerates use their integer part: 23.976 fps is handled as 23 fps.
+- Producer uses the integer part of the framerate, with no drop frame. At 29.97 or 59.94 fps, Producer counts 29 or 59 frames per second. At 23.976 fps, it counts 23 frames per second.
 - A frame number equal to or above the framerate is invalid. Producer only logs a warning and uses the current position: "Timeline locate" pauses where the timeline is, and "Timeline locate and play" plays from where it is.
 
 The field accepts variables, for example `$(custom:tc)`. If the text is not a valid timecode, the module logs a warning and sends nothing.
 
 These actions need an Onlyview version that supports timecodes in frames (`tc=`). An older Producer reads `00:01:30:12` as 1 min 30 s and 12 ms. It does not understand `00:01:30` at all, and uses the current position: "Timeline locate and play" then plays from where the timeline is, with no error.
+
+### Variables
+
+Producer sends its state to the module when it connects, then each change. The module creates the variables of the timelines, boards and Displays of the open show. When a timeline, board or Display is added or removed in Producer, its variables are added or removed too.
+
+In the names below, `<id>` is the Timeline Id, the Board Id or the Display Id. Sequences are counted from 1, like in the actions.
+
+General:
+
+- `show_fps`: the framerate of the show, for example `25` or `29.97`.
+
+Timelines:
+
+- `tl_<id>_name`: the name of the timeline.
+- `tl_<id>_tc`: the timecode, `HH:MM:SS:FF` (see _Timecode formats_ below).
+- `tl_<id>_tc_hms`: the timecode, `HH:MM:SS`.
+- `tl_<id>_tc_ms`: the timecode in milliseconds, a number.
+- `tl_<id>_state`: `Play` or `Pause`.
+- `tl_<id>_on`: `ON` or `OFF`.
+- `tl_<id>_gm`: the grand master, from 0 to 100.
+
+Boards:
+
+- `board_<id>_name`: the name of the board.
+- `board_<id>_state`: `Play` or `Pause`.
+- `board_<id>_on`: `ON` or `OFF`.
+- `board_<id>_gm`: the grand master, from 0 to 100.
+- `board_<id>_seq`, `board_<id>_seq_name`: the number and the name of the current sequence. Empty if no sequence plays.
+- `board_<id>_next`, `board_<id>_next_name`: the number and the name of the enqueued sequence. Empty if nothing is enqueued.
+- `board_<id>_tc`, `board_<id>_tc_hms`, `board_<id>_tc_ms`: the time in the current sequence, in the same formats as the timelines.
+- `board_<id>_remaining`: the time until the end of the current sequence, `HH:MM:SS`. It uses the same format as the board countdown of Producer: it adds 1 second, so it shows `00:00:01` at the end. But it counts to the end of the sequence, without the crossfade to the next sequence. It shows `00:00:00` for an empty sequence. It is empty if the sequence has no end, for example a sequence with only a live input.
+- `board_<id>_remaining_ms`: the same time in milliseconds, a number.
+
+Displays:
+
+- `display_<id>_name`: the name of the Display.
+- `display_<id>_status`: `Idle`, `Offline`, `Connecting`, `Connected` or `Error`, like the Displays tab of Producer.
+
+Timecode formats:
+
+- `_tc` matches what Producer shows on the timeline. It uses the integer part of the framerate, with no drop frame: at 29.97 or 59.94 fps, Producer counts 29 or 59 frames per second, so the frames go from 00 to 28 or 58. These are the rules of the locate actions, so a timecode read in `tl_<id>_tc` locates at the same frame.
+- Producer does not send the timecode continuously. While a timeline or a board plays, the module computes it from its clock, and updates the variables 10 times per second. Producer sends the timecode again after a locate or a jump, so the variables stay in sync.
+- For other formats, use `tl_<id>_tc_ms` in an expression, for example `msToTimestamp($(onlyview:tl_1_tc_ms), 'mm:ss')`.
+
+When the connection to Producer is lost, the values are cleared: the timecodes show `--:--:--:--` or `--:--:--`, and the other variables are empty. A frozen timecode never looks live.
+
+Button text examples, on two lines (replace `onlyview` with the label of your connection):
+
+```
+$(onlyview:tl_1_name)
+$(onlyview:tl_1_tc)
+```
+
+```
+$(onlyview:board_1_seq_name)
+-$(onlyview:board_1_remaining)
+```
+
+```
+$(onlyview:display_2_name)
+$(onlyview:display_2_status)
+```
 
 ### Actions
 
@@ -93,6 +160,8 @@ Action graphs:
 
 ### Troubleshooting
 
-- **The connection is green, but nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
+- **The connection is yellow, "No reply from Producer"**, or **nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
+- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables. The actions still work.
+- **A variable shows `$NA`**: the timeline, board or Display does not exist in the open show, or the id is wrong.
 - **The connection is red or connecting**: check the IP address and port, and check that Producer is running. Producer opens port 3055 only while it runs.
 - **"Command dropped, not connected to Producer" in the log**: the button was pressed while the connection was down. Companion does not queue commands: press the button again once the connection is green.
