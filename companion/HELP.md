@@ -6,7 +6,7 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 
 - Companion 4.3 or later.
 - Onlyview Producer. An action only works if your Onlyview version has the matching feature: for example, board actions need a version with boards.
-- The variables need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty.
+- The variables, the feedbacks and the toggles need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty, the feedbacks stay off, and the toggles do nothing.
 
 ### Setup
 
@@ -111,11 +111,35 @@ $(onlyview:display_2_name)
 $(onlyview:display_2_status)
 ```
 
+### Feedbacks
+
+All the feedbacks are boolean: they change the style of the button when they are true. Each one has a default style, and Companion can invert it. They read the state that Producer sends, like the variables. They are false when the object does not exist in the show, when the connection is lost, and with a Producer too old to send its state.
+
+- **Producer connection is alive**: connected, and Producer replies to `checkalive`. It is also true with a Producer too old to send its state.
+- **Timeline is playing** / **Timeline is paused** / **Timeline is ON**: Timeline Id.
+- **Timeline layer is OFF (blind)** / **Timeline layer is solo**: Timeline Id, layer type and Layer Id, like the layer actions.
+- **Board is playing** / **Board is paused** / **Board is ON**: Board Id.
+- **Board current sequence is**: the sequence plays now. Board Id and Sequence Id, counted from 1.
+- **Board enqueued sequence is**: the sequence plays after the current one.
+- **Board layer is OFF (blind)** / **Board layer is solo**: Board Id and layer, counted from 1.
+- **Display status is**: Display Id and a status: Connected, Offline, Error, Connecting or Idle. It matches `display_<id>_status`.
+
+### On, Off and Toggle
+
+The state actions have a mode: **On**, **Off** or **Toggle**. On and Off always work. Toggle reads the state that Producer sent, and sends the opposite: for example, "Timeline ON/OFF state" in Toggle mode turns a timeline OFF if it is ON. If Producer did not send its state (old Producer, or no connection), or the object does not exist, a toggle sends nothing and logs a warning.
+
+The mode can also be an expression. It must give exactly `on`, `off` or `toggle`, in lowercase. With any other value, Companion skips the action, with no warning.
+
+A toggle uses the last state sent by Producer. If you press the button twice before Producer sends the new state, the module sends the same command twice.
+
+Buttons created before this version had a checkbox. They are converted: checked becomes On, unchecked becomes Off. An expression on the checkbox becomes an expression on the mode: `bool(<expression>) ? "on" : "off"`.
+
 ### Actions
 
 General:
 
 - **Online Displays** / **Offline Displays**: puts one Display online or offline. Display Id 0 means all the Displays.
+- **Display online/offline**: one Display, with On / Off / Toggle. Toggle puts an Offline or Idle Display online, and puts it offline in the other cases (Connected, Connecting, Error). With auto-reconnect, a Display in error goes back to Connecting again and again: only offline stops it.
 - **Launch quick key**
 - **Test pattern**: shows a test pattern on all the Displays. "None" removes it. It also removes the overrides of each output.
 - **Override test pattern on output**: shows a test pattern on one output of one Display only. "None" hides the global test pattern on this output. Use "Test pattern" to remove all the overrides.
@@ -125,16 +149,18 @@ Timelines:
 
 - **Timeline play**: plays from the current position.
 - **Timeline pause**: pauses at the current position.
+- **Timeline play/pause**: pauses the timeline if it plays, plays it otherwise. It needs the state of Producer, like the toggles.
 - **Timeline locate**: goes to the timecode and pauses. See _Timecodes_.
 - **Timeline locate and play**: goes to the timecode and plays. See _Timecodes_.
-- **Timeline ON/OFF state**
+- **Timeline ON/OFF state**: On / Off / Toggle.
 - **Timeline grand master**: value from 0 to 100, with a fade time in seconds.
-- **Timeline layer ON/OFF state**
-- **Timeline layer solo state**
+- **Timeline layer ON/OFF state**: On / Off / Toggle. OFF is the blind state of Producer.
+- **Timeline layer solo state**: On / Off / Toggle.
 
 Boards:
 
 - **Board play** / **Board pause**
+- **Board play/pause**: pauses the board if it plays, plays it otherwise. It needs the state of Producer, like the toggles.
 - **Board enqueue sequence**: the sequence plays after the current one.
 - **Board enqueue sequence and preset**
 - **Board play sequence**: plays the sequence now.
@@ -144,10 +170,10 @@ Boards:
 - **Board play next sequence (sequence + 1)**
 - **Board play next sequence (enqueued sequence)**
 - **Board play previous sequence**
-- **Board ON/OFF state**
+- **Board ON/OFF state**: On / Off / Toggle.
 - **Board grand master**: value from 0 to 100, with a fade time in seconds.
-- **Board layer ON/OFF state**
-- **Board layer solo state**
+- **Board layer ON/OFF state**: On / Off / Toggle. OFF is the blind state of Producer.
+- **Board layer solo state**: On / Off / Toggle.
 
 Audio:
 
@@ -161,7 +187,8 @@ Action graphs:
 ### Troubleshooting
 
 - **The connection is yellow, "No reply from Producer"**, or **nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
-- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables. The actions still work.
+- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables, the feedbacks and the toggles. The actions still work.
+- **A toggle does nothing, and the log says "toggle needs the state of Producer"**: Producer did not send its state. See the line above. Use On or Off instead.
 - **A variable shows `$NA`**: the timeline, board or Display does not exist in the open show, or the id is wrong.
 - **The connection is red or connecting**: check the IP address and port, and check that Producer is running. Producer opens port 3055 only while it runs.
 - **"Command dropped, not connected to Producer" in the log**: the button was pressed while the connection was down. Companion does not queue commands: press the button again once the connection is green.
