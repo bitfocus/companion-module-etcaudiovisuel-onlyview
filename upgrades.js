@@ -4,6 +4,8 @@ import {
 } from '@companion-module/base'
 
 // Option ids of the number fields that had `useVariables: true` in base 1.x.
+// The script matches them on every action: never reuse these ids for an
+// option that is not a number.
 const NUMERIC_OPTION_IDS = [
 	'quickkeyId',
 	'timelineId',

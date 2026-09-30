@@ -26,6 +26,21 @@ export default function (self) {
 		}
 	}
 
+	// Creates a number option for an Onlyview id or index.
+	function idOption(idStr, labelStr, maxValue) {
+		return { ...numberOption(idStr, labelStr, 1, maxValue, 1), asInteger: true }
+	}
+
+	// Onlyview parses the fade time in integer milliseconds.
+	function fadeTimeMs(seconds) {
+		return Math.max(0, Math.round(seconds * 1000))
+	}
+
+	// Onlyview divides the grand master by 100.
+	function grandMasterValue(value) {
+		return Math.min(100, Math.max(0, value))
+	}
+
 	// Creates a state (boolean) option giving the desired parameters.
 	function stateOption(idStr, labelStr) {
 		return {
@@ -62,7 +77,7 @@ export default function (self) {
 		quickkeyAction: {
 			name: 'Launch quick key',
 
-			options: [numberOption('quickkeyId', 'Quick key Id', 1, 999, 1)],
+			options: [idOption('quickkeyId', 'Quick key Id', 999)],
 			callback: async (action) => {
 				const str = 'launchquickkey*' + action.options.quickkeyId + '\n'
 				sendTcp(str)
@@ -111,7 +126,7 @@ export default function (self) {
 
 		timelinePlayAction: {
 			name: 'Timeline play',
-			options: [numberOption('timelineId', 'Timeline Id', 1, 99, 1)],
+			options: [idOption('timelineId', 'Timeline Id', 99)],
 			callback: async (action) => {
 				const str = 'play*' + action.options.timelineId + '\n'
 				sendTcp(str)
@@ -120,7 +135,7 @@ export default function (self) {
 
 		timelinePauseAction: {
 			name: 'Timeline pause',
-			options: [numberOption('timelineId', 'Timeline Id', 1, 99, 1)],
+			options: [idOption('timelineId', 'Timeline Id', 99)],
 			callback: async (action) => {
 				const str = 'locate*' + action.options.timelineId + '\n'
 				sendTcp(str)
@@ -129,7 +144,7 @@ export default function (self) {
 
 		timelineOnOffStateAction: {
 			name: 'Timeline ON/OFF state',
-			options: [numberOption('timelineId', 'Timeline Id', 1, 99, 1), stateOption('state', 'ON/OFF state')],
+			options: [idOption('timelineId', 'Timeline Id', 99), stateOption('state', 'ON/OFF state')],
 			callback: async (action) => {
 				const state = action.options.state ? 1 : 0
 				const str = 'settimelineon*' + action.options.timelineId + '*' + state + '\n'
@@ -140,14 +155,21 @@ export default function (self) {
 		timelineGrandMasterAction: {
 			name: 'Timeline grand master',
 			options: [
-				numberOption('timelineId', 'Timeline Id', 1, 99, 1),
-				numberOption('value', 'Grand master value', 0, 100, 100),
+				idOption('timelineId', 'Timeline Id', 99),
+				{ ...numberOption('value', 'Grand master value', 0, 100, 100), clampValues: true },
 				numberOption('fadeTime', 'Fade time (seconds)', 0, 99, 0),
 			],
 			callback: async (action) => {
 				// Onlyview expects a fade time value in milliseconds.
-				const fadeTime = action.options.fadeTime * 1000
-				const str = 'setgrandmaster*' + action.options.timelineId + '*' + action.options.value + '*' + fadeTime + '\n'
+				const fadeTime = fadeTimeMs(action.options.fadeTime)
+				const str =
+					'setgrandmaster*' +
+					action.options.timelineId +
+					'*' +
+					grandMasterValue(action.options.value) +
+					'*' +
+					fadeTime +
+					'\n'
 				sendTcp(str)
 			},
 		},
@@ -155,7 +177,7 @@ export default function (self) {
 		timelineLayerOnOffStateAction: {
 			name: 'Timeline layer ON/OFF state',
 			options: [
-				numberOption('timelineId', 'Timeline Id', 1, 99, 1),
+				idOption('timelineId', 'Timeline Id', 99),
 				dropDownOption(
 					'layerType',
 					'Layer type',
@@ -165,7 +187,7 @@ export default function (self) {
 					],
 					1,
 				),
-				numberOption('layerId', 'Layer Id', 1, 199, 1),
+				idOption('layerId', 'Layer Id', 199),
 				stateOption('state', 'ON/OFF state'),
 			],
 			callback: async (action) => {
@@ -190,7 +212,7 @@ export default function (self) {
 		timelineLayerSoloStateAction: {
 			name: 'Timeline layer solo state',
 			options: [
-				numberOption('timelineId', 'Timeline Id', 1, 99, 1),
+				idOption('timelineId', 'Timeline Id', 99),
 				dropDownOption(
 					'layerType',
 					'Layer type',
@@ -200,7 +222,7 @@ export default function (self) {
 					],
 					1,
 				),
-				numberOption('layerId', 'Layer Id', 1, 199, 1),
+				idOption('layerId', 'Layer Id', 199),
 				stateOption('state', 'Solo state'),
 			],
 			callback: async (action) => {
@@ -225,7 +247,7 @@ export default function (self) {
 
 		boardPlayAction: {
 			name: 'Board play',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				const str = 'setBoardPlayState*' + action.options.boardId + '*0*1\n'
 				sendTcp(str)
@@ -234,7 +256,7 @@ export default function (self) {
 
 		boardPauseAction: {
 			name: 'Board pause',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				const str = 'setBoardPlayState*' + action.options.boardId + '*0*0\n'
 				sendTcp(str)
@@ -243,7 +265,7 @@ export default function (self) {
 
 		boardEnqueueSequenceAction: {
 			name: 'Board enqueue sequence',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1), numberOption('sequenceId', 'Sequence Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99), idOption('sequenceId', 'Sequence Id', 999)],
 			callback: async (action) => {
 				// Onlyview's API expects board sequences Id to start at 0.
 				const sequence = action.options.sequenceId - 1
@@ -255,9 +277,9 @@ export default function (self) {
 		boardEnqueueSequenceAndPresetAction: {
 			name: 'Board enqueue sequence and preset',
 			options: [
-				numberOption('boardId', 'Board Id', 1, 99, 1),
-				numberOption('sequenceId', 'Sequence Id', 1, 99, 1),
-				numberOption('presetId', 'Preset Id', 1, 99, 1),
+				idOption('boardId', 'Board Id', 99),
+				idOption('sequenceId', 'Sequence Id', 999),
+				idOption('presetId', 'Preset Id', 99),
 			],
 			callback: async (action) => {
 				// Onlyview's API expects board sequences Id to start at 0.
@@ -270,7 +292,7 @@ export default function (self) {
 
 		boardPlaySequenceAction: {
 			name: 'Board play sequence',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1), numberOption('sequenceId', 'Sequence Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99), idOption('sequenceId', 'Sequence Id', 999)],
 			callback: async (action) => {
 				// Onlyview's API expects board sequences Id to start at 0.
 				const sequence = action.options.sequenceId - 1
@@ -282,7 +304,7 @@ export default function (self) {
 
 		boardNextAction: {
 			name: 'Board play next sequence',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				// Using '*0' as default argument for the last one.
 				const str = 'boardPlayNext*' + action.options.boardId + '*0\n'
@@ -292,7 +314,7 @@ export default function (self) {
 
 		boardNextSequenceAction: {
 			name: 'Board play next sequence (sequence + 1)',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				// Using '*1' as default argument for the last one.
 				const str = 'boardPlayNext*' + action.options.boardId + '*1\n'
@@ -302,7 +324,7 @@ export default function (self) {
 
 		boardNextEnqueuedAction: {
 			name: 'Board play next sequence (enqueued sequence)',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				// Using '*2' as default argument for the last one.
 				const str = 'boardPlayNext*' + action.options.boardId + '*2\n'
@@ -312,7 +334,7 @@ export default function (self) {
 
 		boardPreviousAction: {
 			name: 'Board play previous sequence',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1)],
+			options: [idOption('boardId', 'Board Id', 99)],
 			callback: async (action) => {
 				const str = 'boardPlayPrevious*' + action.options.boardId + '\n'
 				sendTcp(str)
@@ -321,7 +343,7 @@ export default function (self) {
 
 		boardOnOffStateAction: {
 			name: 'Board ON/OFF state',
-			options: [numberOption('boardId', 'Board Id', 1, 99, 1), stateOption('state', 'ON/OFF state')],
+			options: [idOption('boardId', 'Board Id', 99), stateOption('state', 'ON/OFF state')],
 			callback: async (action) => {
 				const state = action.options.state ? 1 : 0
 				const str = 'setBoardOn*' + action.options.boardId + '*' + state + '\n'
@@ -332,15 +354,21 @@ export default function (self) {
 		boardGrandMasterAction: {
 			name: 'Board grand master',
 			options: [
-				numberOption('baoardId', 'Board Id', 1, 99, 1),
-				numberOption('value', 'Grand master value', 0, 100, 100),
+				idOption('boardId', 'Board Id', 99),
+				{ ...numberOption('value', 'Grand master value', 0, 100, 100), clampValues: true },
 				numberOption('fadeTime', 'Fade time (seconds)', 0, 99, 0),
 			],
 			callback: async (action) => {
+				// Buttons saved before the baoardId rename have no boardId.
+				const boardId = Number(action.options.boardId)
+				if (!Number.isInteger(boardId) || boardId < 1) {
+					self.log('warn', 'Board grand master: invalid Board Id, set it again in the button')
+					return
+				}
 				// Onlyview expects a fade time value in milliseconds.
-				const fadeTime = action.options.fadeTime * 1000
+				const fadeTime = fadeTimeMs(action.options.fadeTime)
 				const str =
-					'setBoardGrandMaster*' + action.options.baoardId + '*' + action.options.value + '*' + fadeTime + '\n'
+					'setBoardGrandMaster*' + boardId + '*' + grandMasterValue(action.options.value) + '*' + fadeTime + '\n'
 				sendTcp(str)
 			},
 		},
@@ -348,8 +376,8 @@ export default function (self) {
 		boardLayerOnOffStateAction: {
 			name: 'Board layer ON/OFF state',
 			options: [
-				numberOption('boardId', 'Board Id', 1, 99, 1),
-				numberOption('layerId', 'Layer Id', 1, 199, 1),
+				idOption('boardId', 'Board Id', 99),
+				idOption('layerId', 'Layer Id', 199),
 				stateOption('state', 'ON/OFF state'),
 			],
 			callback: async (action) => {
@@ -365,8 +393,8 @@ export default function (self) {
 		boardLayerSoloStateAction: {
 			name: 'Board layer solo state',
 			options: [
-				numberOption('boardId', 'Board Id', 1, 99, 1),
-				numberOption('layerId', 'Layer Id', 1, 199, 1),
+				idOption('boardId', 'Board Id', 99),
+				idOption('layerId', 'Layer Id', 199),
 				stateOption('state', 'ON/OFF state'),
 			],
 			callback: async (action) => {
