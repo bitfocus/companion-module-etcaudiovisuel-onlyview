@@ -1,3 +1,5 @@
+import { Protocol } from './state.js'
+
 // HH:MM:SS or HH:MM:SS:FF. Producer checks the frame against the show framerate.
 const TIMECODE_REGEX_STRING = '/^\\d{1,2}:[0-5]\\d:[0-5]\\d(:\\d{1,3})?$/'
 const TIMECODE_REGEX = /^\d{1,2}:[0-5]\d:[0-5]\d(:\d{1,3})?$/
@@ -76,6 +78,16 @@ export default function (self) {
 		if (!TIMECODE_REGEX.test(text)) {
 			self.log('warn', actionName + ': invalid timecode "' + text + '", use HH:MM:SS or HH:MM:SS:FF')
 			return undefined
+		}
+		// Only a Producer that replies to subscribe knows tc=.
+		if (self.protocol === Protocol.Legacy) {
+			self.log(
+				'warn',
+				actionName +
+					': Producer did not reply to subscribe. If it is too old for timecodes in frames, it reads ' +
+					text +
+					' wrongly.',
+			)
 		}
 		return text
 	}
