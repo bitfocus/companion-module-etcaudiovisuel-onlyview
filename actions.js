@@ -1,4 +1,13 @@
-import { Protocol } from './state.js'
+import { Protocol, ScreenStatus } from './state.js'
+import {
+	findBoard,
+	findBoardLayer,
+	findScreen,
+	findTimeline,
+	findTimelineLayer,
+	timelineLayerPart,
+} from './feedbacks.js'
+import { StateMode } from './upgrades.js'
 
 // HH:MM:SS or HH:MM:SS:FF. Producer checks the frame against the show framerate.
 const TIMECODE_REGEX_STRING = '/^\\d{1,2}:[0-5]\\d:[0-5]\\d(:\\d{1,3})?$/'
@@ -130,6 +139,42 @@ export default function (self) {
 		}
 	}
 
+	// The On / Off / Toggle option of the state actions.
+	function modeOption(labelStr) {
+		return {
+			type: 'dropdown',
+			id: 'mode',
+			label: labelStr,
+			choices: [
+				{ id: StateMode.On, label: 'On' },
+				{ id: StateMode.Off, label: 'Off' },
+				{ id: StateMode.Toggle, label: 'Toggle' },
+			],
+			default: StateMode.On,
+		}
+	}
+
+	// Returns the state to send, or undefined to send nothing.
+	// `current` returns the current state, or undefined if Producer did not send it.
+	function targetState(mode, actionName, current) {
+		if (mode === StateMode.On) return true
+		if (mode === StateMode.Off) return false
+		if (mode !== StateMode.Toggle) {
+			self.log('warn', actionName + ': invalid mode "' + mode + '", set it again in the button')
+			return undefined
+		}
+		if (!self.state.subscribed) {
+			self.log('warn', actionName + ': toggle needs the state of Producer. Producer is too old, or not connected.')
+			return undefined
+		}
+		const value = current()
+		if (value === undefined) {
+			self.log('warn', actionName + ': toggle ignored, Producer did not send this state. Check the ids.')
+			return undefined
+		}
+		return !value
+	}
+
 	// Creates a state (boolean) option giving the desired parameters.
 	function stateOption(idStr, labelStr) {
 		return {
@@ -167,6 +212,22 @@ export default function (self) {
 			options: [displayIdOrAllOption()],
 			callback: async (action) => {
 				sendDisplaysCommand('offline', action.options.displayId)
+			},
+		},
+
+		displayOnlineStateAction: {
+			name: 'Display online/offline',
+			description: 'Toggle puts an offline or idle Display online, and any other Display offline.',
+			options: [idOption('displayId', 'Display Id', 999), modeOption('Online state')],
+			callback: async (action) => {
+				const online = targetState(action.options.mode, 'Display online/offline', () => {
+					const status = findScreen(self.state, action.options.displayId)?.status
+					if (status === undefined) return undefined
+					// Auto-reconnect cycles Error and Connecting: only offline stops it.
+					return status !== ScreenStatus.Offline && status !== ScreenStatus.Idle
+				})
+				if (online === undefined) return
+				sendTcp((online ? 'online*' : 'offline*') + action.options.displayId + '\n')
 			},
 		},
 
@@ -234,6 +295,21 @@ export default function (self) {
 			},
 		},
 
+		timelinePlayPauseAction: {
+			name: 'Timeline play/pause',
+			description: 'Pauses the timeline if it plays, plays it otherwise.',
+			options: [idOption('timelineId', 'Timeline Id', 99)],
+			callback: async (action) => {
+				const play = targetState(
+					StateMode.Toggle,
+					'Timeline play/pause',
+					() => findTimeline(self.state, action.options.timelineId)?.playing,
+				)
+				if (play === undefined) return
+				sendTcp((play ? 'play*' : 'locate*') + action.options.timelineId + '\n')
+			},
+		},
+
 		timelineLocateAction: {
 			name: 'Timeline locate',
 			description: 'Goes to the timecode and pauses.',
@@ -258,10 +334,15 @@ export default function (self) {
 
 		timelineOnOffStateAction: {
 			name: 'Timeline ON/OFF state',
-			options: [idOption('timelineId', 'Timeline Id', 99), stateOption('state', 'ON/OFF state')],
+			options: [idOption('timelineId', 'Timeline Id', 99), modeOption('ON/OFF state')],
 			callback: async (action) => {
-				const state = action.options.state ? 1 : 0
-				const str = 'settimelineon*' + action.options.timelineId + '*' + state + '\n'
+				const on = targetState(
+					action.options.mode,
+					'Timeline ON/OFF state',
+					() => findTimeline(self.state, action.options.timelineId)?.on,
+				)
+				if (on === undefined) return
+				const str = 'settimelineon*' + action.options.timelineId + '*' + (on ? 1 : 0) + '\n'
 				sendTcp(str)
 			},
 		},
@@ -302,13 +383,18 @@ export default function (self) {
 					1,
 				),
 				idOption('layerId', 'Layer Id', 199),
-				stateOption('state', 'ON/OFF state'),
+				modeOption('ON/OFF state'),
 			],
 			callback: async (action) => {
-				// Onlyview expects to receive 2 for the media layer type.
-				const ovLayerType = action.options.layerType == 1 ? 2 : 0
+				const { timelineId, layerType, layerId } = action.options
+				const on = targetState(action.options.mode, 'Timeline layer ON/OFF state', () => {
+					const layer = findTimelineLayer(self.state, timelineId, layerType, layerId)
+					return layer && !layer.blind
+				})
+				if (on === undefined) return
+				const ovLayerType = timelineLayerPart(action.options.layerType)
 				// Onlyview expects the blind state, not the ON/OFF layer state.
-				const state = action.options.state ? 0 : 1
+				const state = on ? 0 : 1
 				const str =
 					'setlayerblind*' +
 					action.options.timelineId +
@@ -337,12 +423,18 @@ export default function (self) {
 					1,
 				),
 				idOption('layerId', 'Layer Id', 199),
-				stateOption('state', 'Solo state'),
+				modeOption('Solo state'),
 			],
 			callback: async (action) => {
-				// Onlyview expects to receive 2 for the media layer type.
-				const ovLayerType = action.options.layerType == 1 ? 2 : 0
-				const state = action.options.state ? 1 : 0
+				const { timelineId, layerType, layerId } = action.options
+				const solo = targetState(
+					action.options.mode,
+					'Timeline layer solo state',
+					() => findTimelineLayer(self.state, timelineId, layerType, layerId)?.solo,
+				)
+				if (solo === undefined) return
+				const ovLayerType = timelineLayerPart(action.options.layerType)
+				const state = solo ? 1 : 0
 				const str =
 					'setlayersolo*' +
 					action.options.timelineId +
@@ -374,6 +466,21 @@ export default function (self) {
 			callback: async (action) => {
 				const str = 'setBoardPlayState*' + action.options.boardId + '*0*0\n'
 				sendTcp(str)
+			},
+		},
+
+		boardPlayPauseAction: {
+			name: 'Board play/pause',
+			description: 'Pauses the board if it plays, plays it otherwise.',
+			options: [idOption('boardId', 'Board Id', 99)],
+			callback: async (action) => {
+				const play = targetState(
+					StateMode.Toggle,
+					'Board play/pause',
+					() => findBoard(self.state, action.options.boardId)?.playing,
+				)
+				if (play === undefined) return
+				sendTcp('setBoardPlayState*' + action.options.boardId + '*0*' + (play ? 1 : 0) + '\n')
 			},
 		},
 
@@ -466,10 +573,15 @@ export default function (self) {
 
 		boardOnOffStateAction: {
 			name: 'Board ON/OFF state',
-			options: [idOption('boardId', 'Board Id', 99), stateOption('state', 'ON/OFF state')],
+			options: [idOption('boardId', 'Board Id', 99), modeOption('ON/OFF state')],
 			callback: async (action) => {
-				const state = action.options.state ? 1 : 0
-				const str = 'setBoardOn*' + action.options.boardId + '*' + state + '\n'
+				const on = targetState(
+					action.options.mode,
+					'Board ON/OFF state',
+					() => findBoard(self.state, action.options.boardId)?.on,
+				)
+				if (on === undefined) return
+				const str = 'setBoardOn*' + action.options.boardId + '*' + (on ? 1 : 0) + '\n'
 				sendTcp(str)
 			},
 		},
@@ -498,16 +610,17 @@ export default function (self) {
 
 		boardLayerOnOffStateAction: {
 			name: 'Board layer ON/OFF state',
-			options: [
-				idOption('boardId', 'Board Id', 99),
-				idOption('layerId', 'Layer Id', 199),
-				stateOption('state', 'ON/OFF state'),
-			],
+			options: [idOption('boardId', 'Board Id', 99), idOption('layerId', 'Layer Id', 199), modeOption('ON/OFF state')],
 			callback: async (action) => {
+				const on = targetState(action.options.mode, 'Board layer ON/OFF state', () => {
+					const layer = findBoardLayer(self.state, action.options.boardId, action.options.layerId)
+					return layer && !layer.blind
+				})
+				if (on === undefined) return
 				// Onlyview's API expects board layers Id to start at 0.
 				const layer = action.options.layerId - 1
 				// Onlyview expects the blind state, not the ON/OFF layer state.
-				const state = action.options.state ? 0 : 1
+				const state = on ? 0 : 1
 				const str = 'setBoardLayerBlind*' + action.options.boardId + '*' + layer + '*' + state + '\n'
 				sendTcp(str)
 			},
@@ -515,15 +628,17 @@ export default function (self) {
 
 		boardLayerSoloStateAction: {
 			name: 'Board layer solo state',
-			options: [
-				idOption('boardId', 'Board Id', 99),
-				idOption('layerId', 'Layer Id', 199),
-				stateOption('state', 'ON/OFF state'),
-			],
+			options: [idOption('boardId', 'Board Id', 99), idOption('layerId', 'Layer Id', 199), modeOption('Solo state')],
 			callback: async (action) => {
+				const solo = targetState(
+					action.options.mode,
+					'Board layer solo state',
+					() => findBoardLayer(self.state, action.options.boardId, action.options.layerId)?.solo,
+				)
+				if (solo === undefined) return
 				// Onlyview's API expects board layers Id to start at 0.
 				const layer = action.options.layerId - 1
-				const state = action.options.state ? 1 : 0
+				const state = solo ? 1 : 0
 				const str = 'setBoardLayerSolo*' + action.options.boardId + '*' + layer + '*' + state + '\n'
 				sendTcp(str)
 			},

@@ -17,7 +17,22 @@ export const NUMERIC_OPTION_IDS = [
 	'sequenceId',
 	'presetId',
 ]
+// `state` was the checkbox of the state actions. It is retired: the second
+// script moves it to `mode`. Never reuse `state` as an option id.
 export const BOOLEAN_OPTION_IDS = ['state']
+
+// Values of the `mode` dropdown of the state actions.
+export const StateMode = Object.freeze({ On: 'on', Off: 'off', Toggle: 'toggle' })
+
+// The actions whose `state` checkbox became the `mode` dropdown.
+export const STATE_ACTION_IDS = [
+	'timelineOnOffStateAction',
+	'timelineLayerOnOffStateAction',
+	'timelineLayerSoloStateAction',
+	'boardOnOffStateAction',
+	'boardLayerOnOffStateAction',
+	'boardLayerSoloStateAction',
+]
 
 function sameValue(a, b) {
 	return a?.isExpression === b?.isExpression && a?.value === b?.value
@@ -55,5 +70,35 @@ function upgradeToExpressions(_context, props) {
 	}
 }
 
+// A checkbox value becomes On or Off. The old actions tested it with `? 1 : 0`.
+// An expression stays an expression, with the same boolean conversion as the
+// base helpers: `bool(x) ? "on" : "off"`.
+function stateToMode(state) {
+	if (state.isExpression) return { isExpression: true, value: `bool(${state.value}) ? "on" : "off"` }
+	return { isExpression: false, value: state.value ? StateMode.On : StateMode.Off }
+}
+
+// The `state` checkbox of the state actions becomes the On / Off / Toggle `mode`
+// dropdown. It runs after upgradeToExpressions, so `state` is already an
+// expression or a boolean.
+function upgradeStateToMode(_context, props) {
+	const updatedActions = []
+
+	for (const action of props.actions) {
+		if (!STATE_ACTION_IDS.includes(action.actionId)) continue
+		const state = action.options.state
+		if (state === undefined) continue
+		if (action.options.mode === undefined) action.options.mode = stateToMode(state)
+		delete action.options.state
+		updatedActions.push(action)
+	}
+
+	return {
+		updatedConfig: null,
+		updatedActions,
+		updatedFeedbacks: [],
+	}
+}
+
 // Once a script has been added it cannot be removed.
-export const UpgradeScripts = [upgradeToExpressions]
+export const UpgradeScripts = [upgradeToExpressions, upgradeStateToMode]
