@@ -42,6 +42,13 @@ export async function startFakeProducer() {
 		send(line) {
 			for (const socket of sockets) socket.write(line + '\n')
 		},
+		// Writes the data as is, to test partial lines.
+		sendRaw(data) {
+			for (const socket of sockets) socket.write(data)
+		},
+		get clientCount() {
+			return sockets.size
+		},
 		async close() {
 			for (const socket of sockets) socket.destroy()
 			await new Promise((resolve) => server.close(resolve))

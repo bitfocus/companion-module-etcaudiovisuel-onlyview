@@ -10,7 +10,7 @@ export default function (self) {
 		if (self.socket !== undefined && self.socket.isConnected) {
 			self.socket.send(buffer)
 		} else {
-			self.log('debug', 'Socket not connected :(')
+			self.log('warn', 'Command dropped, not connected to Producer: ' + str.trim())
 		}
 	}
 
