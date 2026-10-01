@@ -134,6 +134,31 @@ A toggle uses the last state sent by Producer. If you press the button twice bef
 
 Buttons created before this version had a checkbox. They are converted: checked becomes On, unchecked becomes Off. An expression on the checkbox becomes an expression on the mode: `bool(<expression>) ? "on" : "off"`.
 
+### Presets
+
+The presets are ready-made buttons: drag them from the _Presets_ tab to a button. They use the variables and the feedbacks above. The module builds them for the timelines, boards and Displays of the open show, and updates the list of presets when the show changes. A button you already placed is a copy: it does not change when the show changes. Edit its ids by hand.
+
+When Producer sent no timeline, board or Display (old Producer, or no connection yet), the module gives presets for id 1. With an old Producer, only these presets work: Previous, Next, the sequence buttons, the quick keys, and all Displays online and offline. The toggles, the colors and the texts with variables need the state of Producer (see _Requirements_).
+
+- **Timelines**, for each timeline:
+  - Play/pause: green while it plays, yellow while it is paused.
+  - Timecode: the name and `tl_<id>_tc`. The text turns green while the timeline plays. No action.
+  - ON/OFF toggle: blue while the timeline is ON.
+- **Boards**, for each board:
+  - Play/pause: green while it plays, yellow while it is paused.
+  - Previous and Next: "Board play previous sequence" and "Board play next sequence".
+  - Remaining time: the name of the current sequence and `board_<id>_remaining`. No action.
+  - ON/OFF toggle: blue while the board is ON.
+  - One button per sequence, with "Board play sequence": green while the sequence plays, orange while it is enqueued. The text is the sequence name when the preset is built. It does not follow a later rename.
+- **Displays**:
+  - One status button per Display: the name and `display_<id>_status`. Green when connected, red when offline, orange in error. A press does nothing, so a tap during a show cannot take a Display offline. To toggle a Display, add the "Display online/offline" action yourself.
+  - All Displays online.
+  - All Displays offline: hold the button for 1 second. A short press does nothing.
+- **Quick keys**: quick keys 1 to 12. Producer does not send the quick keys, so change the Quick key Id in the action if needed.
+- **Show / Connection**: the Producer connection (green when it is alive, red otherwise), and the show framerate.
+
+The texts contain the label of the connection, for example `$(onlyview:tl_1_name)`. If you rename the connection, Companion updates the existing buttons.
+
 ### Actions
 
 General:
