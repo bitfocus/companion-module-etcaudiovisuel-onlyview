@@ -6,11 +6,11 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 
 - Companion 4.3 or later.
 - Onlyview Producer. An action only works if your Onlyview version has the matching feature: for example, board actions need a version with boards.
-- The variables, the feedbacks and the toggles need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty, the feedbacks stay off, and the toggles do nothing.
+- The variables, the feedbacks, the toggles (including play/pause) and the presets made for the ids of the show need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty, the feedbacks stay off, the toggles do nothing, and only the presets without state work (see _Presets_).
 
 ### Setup
 
-1. In Producer, open _File > Producer Options_, tab _General_, and check _Accept remote commands_. Without it, Producer ignores every command, and the module shows no error.
+1. In Producer, open _File > Producer Options_, tab _General_, and check _Accept remote commands_. Without it, Producer ignores every command, and the connection turns yellow ("No reply from Producer").
 2. For the "Shutdown Master" action only: in the same dialog, check _Allow the reboot and halt actions on Producer_ (group _Producer actions_).
 3. In Companion, add the Onlyview connection:
    - **Producer IP**: the IP address of the Producer computer.
@@ -212,7 +212,7 @@ Action graphs:
 ### Troubleshooting
 
 - **The connection is yellow, "No reply from Producer"**, or **nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
-- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables, the feedbacks and the toggles. The actions still work.
+- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables, the feedbacks, the toggles and the presets of the show. The actions still work.
 - **A toggle does nothing, and the log says "toggle needs the state of Producer"**: Producer did not send its state. See the line above. Use On or Off instead.
 - **A variable shows `$NA`**: the timeline, board or Display does not exist in the open show, or the id is wrong.
 - **The connection is red or connecting**: check the IP address and port, and check that Producer is running. Producer opens port 3055 only while it runs.
