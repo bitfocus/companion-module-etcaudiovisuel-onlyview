@@ -141,11 +141,11 @@ The presets are ready-made buttons: drag them from the _Presets_ tab to a button
 When Producer sent no timeline, board or Display (old Producer, or no connection yet), the module gives presets for id 1. With an old Producer, only these presets work: Previous, Next, the sequence buttons, the quick keys, and all Displays online and offline. The toggles, the colors and the texts with variables need the state of Producer (see _Requirements_).
 
 - **Timelines**, for each timeline:
-  - Play/pause: green while it plays, yellow while it is paused.
+  - Play/pause: the color shows the state (green while it plays, yellow while it is paused). The symbol shows what a press does: ⏸ while it plays, ▶ while it is paused, ⏯ when the state is unknown.
   - Timecode: the name and `tl_<id>_tc`. The text turns green while the timeline plays. No action.
   - ON/OFF toggle: blue while the timeline is ON.
 - **Boards**, for each board:
-  - Play/pause: green while it plays, yellow while it is paused.
+  - Play/pause: the color shows the state (green while it plays, yellow while it is paused). The symbol shows what a press does: ⏸ while it plays, ▶ while it is paused, ⏯ when the state is unknown.
   - Previous and Next: "Board play previous sequence" and "Board play next sequence".
   - Remaining time: the name of the current sequence and `board_<id>_remaining`. No action.
   - ON/OFF toggle: blue while the board is ON.

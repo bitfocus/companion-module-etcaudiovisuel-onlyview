@@ -195,6 +195,13 @@ test('presets: valid actions, feedbacks and structure, with the show ids', async
 	assert.equal(recorded.presetDefinitions.board_2_seq_3.style.text, '3\nFinale $ (custom:x)')
 	assert.equal(recorded.presetDefinitions.tl_4_tc.style.text, '$(onlyview:tl_4_name)\n$(onlyview:tl_4_tc)')
 
+	// Play/pause shows what a press does: pause while playing, play while paused.
+	const playPause = recorded.presetDefinitions.tl_1_playpause
+	assert.equal(playPause.style.text, '$(onlyview:tl_1_name)\n⏯')
+	const textOf = (feedbackId) => playPause.feedbacks.find((f) => f.feedbackId === feedbackId).style.text
+	assert.equal(textOf('timelinePlaying'), '$(onlyview:tl_1_name)\n⏸')
+	assert.equal(textOf('timelinePaused'), '$(onlyview:tl_1_name)\n▶')
+
 	checkTextVariables(recorded, SNAPSHOT)
 })
 

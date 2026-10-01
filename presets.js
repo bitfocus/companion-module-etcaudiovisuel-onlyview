@@ -53,6 +53,14 @@ function preset(name, text, steps, feedbacks = []) {
 	return { type: 'simple', name, style: baseStyle(text), steps, feedbacks }
 }
 
+// The color shows the state, the symbol shows what a press does.
+function playPausePreset(name, title, actionId, playingId, pausedId, options) {
+	return preset(name, `${title}\n⏯`, press(actionId, options), [
+		{ feedbackId: playingId, options, style: { ...fbStyle(GREEN), text: `${title}\n⏸` } },
+		{ feedbackId: pausedId, options, style: { ...fbStyle(YELLOW), text: `${title}\n▶` } },
+	])
+}
+
 /** Returns { structure, presets } for setPresetDefinitions. `label` is the connection label. */
 export function presetDefinitions(model, label) {
 	const v = (variable) => `$(${label}:${variable})`
@@ -73,14 +81,13 @@ export function presetDefinitions(model, label) {
 			presets: [
 				add(
 					`${tl}_playpause`,
-					preset(
+					playPausePreset(
 						`Timeline ${id} play/pause`,
-						`${v(`${tl}_name`)}\n${v(`${tl}_state`)}`,
-						press('timelinePlayPauseAction', options),
-						[
-							{ feedbackId: FeedbackId.TimelinePlaying, options, style: fbStyle(GREEN) },
-							{ feedbackId: FeedbackId.TimelinePaused, options, style: fbStyle(YELLOW) },
-						],
+						v(`${tl}_name`),
+						'timelinePlayPauseAction',
+						FeedbackId.TimelinePlaying,
+						FeedbackId.TimelinePaused,
+						options,
 					),
 				),
 				add(
@@ -118,14 +125,13 @@ export function presetDefinitions(model, label) {
 		const ids = [
 			add(
 				`${board}_playpause`,
-				preset(
+				playPausePreset(
 					`Board ${id} play/pause`,
-					`${v(`${board}_name`)}\n${v(`${board}_state`)}`,
-					press('boardPlayPauseAction', options),
-					[
-						{ feedbackId: FeedbackId.BoardPlaying, options, style: fbStyle(GREEN) },
-						{ feedbackId: FeedbackId.BoardPaused, options, style: fbStyle(YELLOW) },
-					],
+					v(`${board}_name`),
+					'boardPlayPauseAction',
+					FeedbackId.BoardPlaying,
+					FeedbackId.BoardPaused,
+					options,
 				),
 			),
 			add(
