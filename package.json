@@ -1,6 +1,6 @@
 {
     "name": "onlyview",
-    "version": "1.0.2",
+    "version": "2.0.0",
     "description": "Control and monitor Onlyview media servers (timelines, boards, displays)",
     "keywords": ["Media Server", "Video", "Show Control", "Onlyview"],
     "type": "module",
