@@ -10,6 +10,9 @@ export function createFakeContext() {
 		feedbackDefinitions: {},
 		variableDefinitions: {},
 		variableValues: {},
+		presetStructure: [],
+		presetDefinitions: {},
+		presetCalls: 0,
 		// Each setVariableValues call, to check the batching.
 		variableValueCalls: [],
 		checkedFeedbacks: [],
@@ -35,7 +38,11 @@ export function createFakeContext() {
 		checkFeedbacks: (types) => recorded.checkedFeedbacks.push(...types),
 		checkAllFeedbacks: () => {},
 		checkFeedbacksById: () => {},
-		setPresetDefinitions: () => {},
+		setPresetDefinitions: (structure, presets) => {
+			recorded.presetStructure = structure
+			recorded.presetDefinitions = presets
+			recorded.presetCalls++
+		},
 		setCompositeElementDefinitions: () => {},
 		setVariableDefinitions: (defs) => (recorded.variableDefinitions = defs),
 		setVariableValues: (values) => {

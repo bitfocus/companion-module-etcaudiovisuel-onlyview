@@ -1,13 +1,13 @@
 import { combineRgb } from '@companion-module/base'
 import { ChangeKind, ScreenStatus } from './state.js'
 
-const BLACK = combineRgb(0, 0, 0)
-const WHITE = combineRgb(255, 255, 255)
-const GREEN = combineRgb(0, 204, 0)
-const YELLOW = combineRgb(255, 204, 0)
-const ORANGE = combineRgb(255, 128, 0)
-const RED = combineRgb(204, 0, 0)
-const BLUE = combineRgb(0, 102, 204)
+export const BLACK = combineRgb(0, 0, 0)
+export const WHITE = combineRgb(255, 255, 255)
+export const GREEN = combineRgb(0, 204, 0)
+export const YELLOW = combineRgb(255, 204, 0)
+export const ORANGE = combineRgb(255, 128, 0)
+export const RED = combineRgb(204, 0, 0)
+export const BLUE = combineRgb(0, 102, 204)
 
 export const FeedbackId = Object.freeze({
 	ProducerConnected: 'producerConnected',

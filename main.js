@@ -4,6 +4,7 @@ import UpdateActions from './actions.js'
 import UpdateFeedbacks, { feedbacksForChanges } from './feedbacks.js'
 import { OnlyviewState, ChangeKind, Protocol } from './state.js'
 import { definedObjects, variableDefinitions, variableValues } from './variables.js'
+import { presetDefinitions, presetModel } from './presets.js'
 
 export { UpgradeScripts }
 
@@ -23,8 +24,10 @@ const DEFAULT_TIMING = Object.freeze({
 	aliveTimeoutMs: 5000,
 	// Refresh rate of the timecode variables while something plays.
 	clockMs: 100,
-	// The variable definitions change at most this often.
+	// The variable definitions and presets wait for this long without a structure change.
 	definitionsMs: 250,
+	// But never longer than this after the first change.
+	definitionsMaxMs: 2000,
 })
 
 export default class ModuleInstance extends InstanceBase {
@@ -66,6 +69,8 @@ export default class ModuleInstance extends InstanceBase {
 		this.config = config
 		this.noReply = false
 		this.legacyLogged = false
+		// The presets contain the connection label, which may have changed.
+		this.updatePresets()
 		this.initTcp()
 	}
 
@@ -331,7 +336,7 @@ export default class ModuleInstance extends InstanceBase {
 	flushState() {
 		const changes = this.state.takeChanges()
 		if (changes.size === 0) return
-		if (changes.has(ChangeKind.Structure)) this.scheduleDefinitions()
+		if (changes.has(ChangeKind.Structure) || changes.has(ChangeKind.BoardSequence)) this.scheduleDefinitions()
 		this.updateVariables()
 		this.updateClock()
 		this.stateChanged(changes)
@@ -343,12 +348,20 @@ export default class ModuleInstance extends InstanceBase {
 		if (ids.length > 0) this.checkFeedbacks(...ids)
 	}
 
+	// Trailing debounce: a snapshot that arrives in several packets builds once, from the full show.
 	scheduleDefinitions() {
-		if (this.definitionsTimer) return
-		this.definitionsTimer = setTimeout(() => {
-			delete this.definitionsTimer
-			this.updateDefinitions()
-		}, this.timing.definitionsMs)
+		// Real time, like the timers. Tests replace `this.now` for the clocks.
+		const now = performance.now()
+		if (!this.definitionsTimer) this.definitionsFirstChangeAt = now
+		clearTimeout(this.definitionsTimer)
+		const maxDelay = this.definitionsFirstChangeAt + this.timing.definitionsMaxMs - now
+		this.definitionsTimer = setTimeout(
+			() => {
+				delete this.definitionsTimer
+				this.updateDefinitions()
+			},
+			Math.max(0, Math.min(this.timing.definitionsMs, maxDelay)),
+		)
 	}
 
 	updateDefinitions() {
@@ -364,6 +377,17 @@ export default class ModuleInstance extends InstanceBase {
 			}
 		}
 		this.updateVariables()
+		this.updatePresets()
+	}
+
+	updatePresets() {
+		// Like the variables: without a subscription, keep the last ids.
+		if (this.state.subscribed || this.presetObjects === undefined) this.presetObjects = presetModel(this.state)
+		const key = JSON.stringify([this.label, this.presetObjects])
+		if (key === this.presetsKey) return
+		this.presetsKey = key
+		const { structure, presets } = presetDefinitions(this.presetObjects, this.label)
+		this.setPresetDefinitions(structure, presets)
 	}
 
 	// Sends only the values that changed.
