@@ -4,7 +4,7 @@
 	"id": "etcaudiovisuel-onlyview",
 	"name": "etcaudiovisuel-onlyview",
 	"shortname": "Onlyview",
-	"description": "Onlyview plugin for Companion",
+	"description": "Control and monitor Onlyview media servers (timelines, boards, displays)",
 	"version": "1.0.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git",
@@ -28,5 +28,5 @@
 	"legacyIds": [],
 	"manufacturer": "ETC Audiovisuel",
 	"products": ["Onlyview"],
-	"keywords": ["Media Server"]
+	"keywords": ["Media Server", "Video", "Show Control", "Onlyview"]
 }

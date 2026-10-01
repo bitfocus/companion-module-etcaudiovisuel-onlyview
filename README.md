@@ -6,6 +6,8 @@ This module allows you to control an [ETC Audiovisuel Onlyview](https://etc-only
 
 Execute `yarn` command to install the dependencies.
 
-The module is built using the `yarn build` command, this will generate the corresponding files for Companion to load the module correctly.
+Run `yarn test` to run the unit tests. Run `yarn check-module` to check the module like the Companion CI does.
+
+Run `yarn package` to build the module package that Companion loads.
 
 See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)
