@@ -255,42 +255,4 @@ const HANDLERS = {
 		}
 		setName(state, q, name)
 	},
-
-	quickkeyremoved(state, fields) {
-		if (state.quickkeys.delete(toInt(fields[1]))) state.changes.add(ChangeKind.Structure)
-	},
-
-	// A parent removal also drops its layers and sequences.
-	timelineremoved(state, fields) {
-		if (state.timelines.delete(toInt(fields[1])))
-			state.changes.add(ChangeKind.Timeline).add(ChangeKind.TimelineLayer).add(ChangeKind.Structure)
-	},
-
-	boardremoved(state, fields) {
-		if (state.boards.delete(toInt(fields[1])))
-			state.changes
-				.add(ChangeKind.Board)
-				.add(ChangeKind.BoardLayer)
-				.add(ChangeKind.BoardSequence)
-				.add(ChangeKind.Structure)
-	},
-
-	screenremoved(state, fields) {
-		if (state.screens.delete(toInt(fields[1]))) state.changes.add(ChangeKind.Screen).add(ChangeKind.Structure)
-	},
-
-	timelinelayerremoved(state, fields) {
-		const t = state.timelines.get(toInt(fields[1]))
-		if (t?.layers.delete(`${toInt(fields[2])}*${toInt(fields[3])}`)) state.changes.add(ChangeKind.TimelineLayer)
-	},
-
-	boardlayerremoved(state, fields) {
-		const b = state.boards.get(toInt(fields[1]))
-		if (b?.layers.delete(toInt(fields[2]))) state.changes.add(ChangeKind.BoardLayer)
-	},
-
-	boardsequenceremoved(state, fields) {
-		const b = state.boards.get(toInt(fields[1]))
-		if (b?.sequenceNames.delete(toInt(fields[2]))) state.changes.add(ChangeKind.BoardSequence)
-	},
 }

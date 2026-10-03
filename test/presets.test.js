@@ -212,7 +212,8 @@ test('presets: one button per quick key of the show', async (t) => {
 	assert.equal(recorded.variableValues.quickkey_3_name, 'Go * 1')
 	assert.equal(recorded.variableDefinitions.quickkey_3_name.name, 'Quick key 3 (Go * 1): name')
 
-	instance.onData(Buffer.from('quickkeystate*3*Stop\nquickkeyremoved*20\n'))
+	// Quick key 20 was removed: Producer resends the full state.
+	instance.onData(Buffer.from(['subscribed*1', ...SNAPSHOT, 'quickkeystate*3*Stop', ''].join('\n')))
 	instance.updateDefinitions()
 	assert.equal(recorded.variableValues.quickkey_3_name, 'Stop')
 	assert.equal(recorded.presetDefinitions.quickkey_3.name, 'Quick key 3 (Stop)')

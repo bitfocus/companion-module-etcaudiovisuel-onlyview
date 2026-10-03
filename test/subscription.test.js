@@ -131,42 +131,6 @@ test('a change only sends the changed variables', async () => {
 	await cleanup()
 })
 
-test('removals drop the objects and their children', async () => {
-	const { producer, instance, recorded, cleanup } = await startSubscribed()
-	const state = instance.state
-
-	await sendLines(
-		producer,
-		recorded,
-		['timelinelayerremoved*1*2*40', 'boardlayerremoved*1*9', 'boardsequenceremoved*1*2'],
-		() => state.boards.get(1).sequenceNames.size === 49,
-	)
-	assert.equal(state.timelines.get(1).layers.size, 43)
-	assert.equal(state.boards.get(1).layers.size, 9)
-	assert.equal(recorded.variableValues.board_1_seq_name, '')
-
-	await sendLines(producer, recorded, ['timelineremoved*1', 'boardremoved*1', 'screenremoved*2'], () =>
-		Object.keys(recorded.variableDefinitions).every((id) => !id.startsWith('tl_1_')),
-	)
-	assert.equal(state.timelines.has(1), false)
-	assert.equal(state.boards.size, 0)
-	assert.equal(state.screens.has(2), false)
-	const ids = Object.keys(recorded.variableDefinitions)
-	assert.ok(ids.includes('tl_2_name'))
-	assert.ok(!ids.some((id) => id.startsWith('board_1_') || id.startsWith('display_2_')))
-
-	// A later state line creates the object again.
-	await sendLines(
-		producer,
-		recorded,
-		['boardstate*1*1*0*80*0*-1*-1*-1*-1*Back'],
-		() => 'board_1_name' in recorded.variableDefinitions,
-	)
-	assert.equal(recorded.variableValues.board_1_name, 'Back')
-	assert.equal(state.boards.get(1).sequenceNames.size, 0)
-	await cleanup()
-})
-
 test('subscribed drops the old state', async () => {
 	const { producer, recorded, cleanup } = await startSubscribed()
 	await sendLines(
@@ -305,7 +269,7 @@ test('state changes are reported by kind, for the feedbacks', async () => {
 	assert.equal(instance.state.timelines.get(1).layers.get('2*3').blind, false)
 	// Nothing changes: no report
 	const count = reported.length
-	instance.onData(Buffer.from('alive\ntimelineremoved*99\n'))
+	instance.onData(Buffer.from('alive\n'))
 	assert.equal(reported.length, count)
 	await instance.destroy()
 })

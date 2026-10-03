@@ -153,8 +153,8 @@ test('feedbacks follow the state changes', async () => {
 	assert.equal(check(recorded, FeedbackId.BoardLayerSolo, { boardId: 1, layerId: 1 }), true)
 	assert.equal(check(recorded, FeedbackId.DisplayStatus, { displayId: 1, status: 4 }), true)
 
-	// A removed object is false.
-	instance.onData(Buffer.from('timelineremoved*1\nboardremoved*1\nscreenremoved*1\n'))
+	// After a structure change, Producer resends the full state: a missing object is false.
+	instance.onData(Buffer.from('subscribed*1\n'))
 	assert.equal(check(recorded, FeedbackId.TimelinePaused, { timelineId: 1 }), false)
 	assert.equal(check(recorded, FeedbackId.TimelineLayerSolo, { timelineId: 1, layerType: 1, layerId: 1 }), false)
 	assert.equal(check(recorded, FeedbackId.BoardPaused, { boardId: 1 }), false)
