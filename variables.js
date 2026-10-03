@@ -27,6 +27,7 @@ export function definedObjects(state) {
 		timelines: sortedIds(state.timelines),
 		boards: sortedIds(state.boards),
 		screens: sortedIds(state.screens),
+		quickkeys: sortedIds(state.quickkeys),
 	}
 }
 
@@ -66,6 +67,9 @@ export function variableDefinitions(state) {
 		defs[`display_${id}_name`] = { name: `${display}: name` }
 		defs[`display_${id}_status`] = { name: `${display}: status` }
 	}
+
+	for (const id of sortedIds(state.quickkeys))
+		defs[`quickkey_${id}_name`] = { name: `${label('Quick key', id, state.quickkeys.get(id).name)}: name` }
 
 	return defs
 }
@@ -130,6 +134,8 @@ export function variableValues(state, objects, now) {
 		values[`display_${id}_name`] = s ? s.name : ''
 		values[`display_${id}_status`] = s ? (SCREEN_STATUS_TEXT[s.status] ?? '') : ''
 	}
+
+	for (const id of objects.quickkeys) values[`quickkey_${id}_name`] = state.quickkeys.get(id)?.name ?? ''
 
 	return values
 }

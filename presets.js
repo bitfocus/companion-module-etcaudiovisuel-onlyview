@@ -4,7 +4,7 @@ import { BLACK, BLUE, FeedbackId, GREEN, ORANGE, RED, WHITE, YELLOW } from './fe
 import { ScreenStatus } from './state.js'
 import { StateMode } from './upgrades.js'
 
-// Quick keys have no state: give a fixed number of buttons.
+// Quick key buttons when Producer did not send any quick key.
 export const QUICKKEY_PRESET_COUNT = 12
 // Sequence buttons of the fallback board, when its sequences are unknown.
 const FALLBACK_SEQUENCE_COUNT = 4
@@ -30,6 +30,7 @@ export function presetModel(state) {
 			}
 		}),
 		screens: sortedIds(state.screens).map((id) => ({ id, name: state.screens.get(id).name })),
+		quickkeys: sortedIds(state.quickkeys).map((id) => ({ id, name: state.quickkeys.get(id).name })),
 	}
 }
 
@@ -212,10 +213,18 @@ export function presetDefinitions(model, label) {
 		),
 	]
 
-	const quickkeyIds = Array.from({ length: QUICKKEY_PRESET_COUNT }, (_, i) =>
+	const knownQuickkeys = model.quickkeys.length > 0
+	const quickkeys = knownQuickkeys
+		? model.quickkeys
+		: Array.from({ length: QUICKKEY_PRESET_COUNT }, (_, i) => ({ id: i + 1, name: '' }))
+	const quickkeyIds = quickkeys.map(({ id, name }) =>
 		add(
-			`quickkey_${i + 1}`,
-			preset(`Quick key ${i + 1}`, `Quick key\n${i + 1}`, press('quickkeyAction', { quickkeyId: i + 1 })),
+			`quickkey_${id}`,
+			preset(
+				groupName('Quick key', { id, name }),
+				knownQuickkeys ? `${id}\n${v(`quickkey_${id}_name`)}` : `Quick key\n${id}`,
+				press('quickkeyAction', { quickkeyId: id }),
+			),
 		),
 	)
 
@@ -247,7 +256,7 @@ export function presetDefinitions(model, label) {
 		{
 			id: 'quickkeys',
 			name: 'Quick keys',
-			description: 'Change the Quick key Id in the action.',
+			description: knownQuickkeys ? undefined : 'Change the Quick key Id in the action.',
 			definitions: quickkeyIds,
 		},
 		{ id: 'show', name: 'Show / Connection', definitions: showIds },

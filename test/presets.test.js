@@ -199,6 +199,27 @@ test('presets: valid actions, feedbacks and structure, with the show ids', async
 	checkTextVariables(recorded, SNAPSHOT)
 })
 
+test('presets: one button per quick key of the show', async (t) => {
+	const { instance, recorded } = await moduleWith(t, [...SNAPSHOT, 'quickkeystate*3*Go * 1', 'quickkeystate*20*'])
+	checkPresets(recorded)
+	assert.deepEqual(
+		presetIds(recorded).filter((id) => id.startsWith('quickkey_')),
+		['quickkey_20', 'quickkey_3'],
+	)
+	assert.equal(recorded.presetDefinitions.quickkey_3.style.text, '3\n$(onlyview:quickkey_3_name)')
+	assert.equal(recorded.presetDefinitions.quickkey_3.name, 'Quick key 3 (Go * 1)')
+	assert.equal(recorded.presetDefinitions.quickkey_20.name, 'Quick key 20')
+	assert.equal(recorded.variableValues.quickkey_3_name, 'Go * 1')
+	assert.equal(recorded.variableDefinitions.quickkey_3_name.name, 'Quick key 3 (Go * 1): name')
+
+	instance.onData(Buffer.from('quickkeystate*3*Stop\nquickkeyremoved*20\n'))
+	instance.updateDefinitions()
+	assert.equal(recorded.variableValues.quickkey_3_name, 'Stop')
+	assert.equal(recorded.presetDefinitions.quickkey_3.name, 'Quick key 3 (Stop)')
+	assert.ok(!presetIds(recorded).includes('quickkey_20'))
+	assert.ok(!('quickkey_20_name' in recorded.variableDefinitions))
+})
+
 test('presets: id 1 when Producer sent nothing', async (t) => {
 	const { recorded } = await moduleWith(t, undefined)
 	checkPresets(recorded)

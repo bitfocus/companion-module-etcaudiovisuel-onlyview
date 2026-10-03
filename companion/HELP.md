@@ -86,6 +86,10 @@ Displays:
 - `display_<id>_name`: the name of the Display.
 - `display_<id>_status`: `Idle`, `Offline`, `Connecting`, `Connected` or `Error`, like the Displays tab of Producer.
 
+Quick keys:
+
+- `quickkey_<id>_name`: the name of the quick key.
+
 Timecode formats:
 
 - `_tc` matches what Producer shows on the timeline. It uses the integer part of the framerate, with no drop frame: at 29.97 or 59.94 fps, Producer counts 29 or 59 frames per second, so the frames go from 00 to 28 or 58. These are the rules of the locate actions, so a timecode read in `tl_<id>_tc` locates at the same frame.
@@ -136,7 +140,7 @@ Buttons created before this version had a checkbox. They are converted: checked 
 
 ### Presets
 
-The presets are ready-made buttons: drag them from the _Presets_ tab to a button. They use the variables and the feedbacks above. The module builds them for the timelines, boards and Displays of the open show, and updates the list of presets when the show changes. A button you already placed is a copy: it does not change when the show changes. Edit its ids by hand.
+The presets are ready-made buttons: drag them from the _Presets_ tab to a button. They use the variables and the feedbacks above. The module builds them for the timelines, boards, Displays and quick keys of the open show, and updates the list of presets when the show changes. A button you already placed is a copy: it does not change when the show changes. Edit its ids by hand.
 
 When Producer sent no timeline, board or Display (old Producer, or no connection yet), the module gives presets for id 1. With an old Producer, only these presets work: Previous, Next, the sequence buttons, the quick keys, and all Displays online and offline. The toggles, the colors and the texts with variables need the state of Producer (see _Requirements_).
 
@@ -154,7 +158,7 @@ When Producer sent no timeline, board or Display (old Producer, or no connection
   - One status button per Display: the name and `display_<id>_status`. Green when connected, red when offline, orange in error. A press does nothing, so a tap during a show cannot take a Display offline. To toggle a Display, add the "Display online/offline" action yourself.
   - All Displays online.
   - All Displays offline: hold the button for 1 second. A short press does nothing.
-- **Quick keys**: quick keys 1 to 12. Producer does not send the quick keys, so change the Quick key Id in the action if needed.
+- **Quick keys**: one button per quick key, with its id and `quickkey_<id>_name`. When Producer sent no quick key, quick keys 1 to 12: change the Quick key Id in the action if needed.
 - **Show / Connection**: the Producer connection (green when it is alive, red otherwise), and the show framerate.
 
 The texts contain the label of the connection, for example `$(onlyview:tl_1_name)`. If you rename the connection, Companion updates the existing buttons.

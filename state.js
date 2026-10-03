@@ -64,6 +64,7 @@ export class OnlyviewState {
 		this.timelines = new Map()
 		this.boards = new Map()
 		this.screens = new Map()
+		this.quickkeys = new Map()
 	}
 
 	// Drops everything. Every kind is reported, so dependent values go blank.
@@ -239,6 +240,24 @@ const HANDLERS = {
 		setName(state, s, name)
 		s.status = status
 		state.changes.add(ChangeKind.Screen)
+	},
+
+	// quickkeystate*<id>*<name>
+	quickkeystate(state, fields) {
+		const id = toInt(fields[1])
+		const name = nameField(fields, 2)
+		if (id === undefined || name === undefined) return
+		let q = state.quickkeys.get(id)
+		if (!q) {
+			q = { id, name: '' }
+			state.quickkeys.set(id, q)
+			state.changes.add(ChangeKind.Structure)
+		}
+		setName(state, q, name)
+	},
+
+	quickkeyremoved(state, fields) {
+		if (state.quickkeys.delete(toInt(fields[1]))) state.changes.add(ChangeKind.Structure)
 	},
 
 	// A parent removal also drops its layers and sequences.
