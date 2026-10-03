@@ -6,20 +6,20 @@ import { Protocol } from '../state.js'
 
 // Each object exists twice: once in each state.
 const SNAPSHOT = [
-	'statetimeline*1*1*0*100*1',
-	'statetimelinelayer*1*2*1*0*0',
-	'statetimelinelayer*1*2*2*1*1',
-	'statetimelinelayer*1*0*1*1*0',
-	'statetimeline*2*0*0*100*0',
-	'stateboard*1*1*0*100*1*0*-1*1000',
-	'stateboardlayer*1*0*0*0',
-	'stateboardlayer*1*1*1*1',
-	'stateboard*2*0*0*100*0*-1*-1*-1',
-	'screenstatus*1*3',
-	'screenstatus*2*1',
-	'screenstatus*3*4',
-	'screenstatus*4*2',
-	'screenstatus*5*0',
+	'timelinestate*1*1*0*100*1*',
+	'timelinelayerstate*1*2*1*0*0',
+	'timelinelayerstate*1*2*2*1*1',
+	'timelinelayerstate*1*0*1*1*0',
+	'timelinestate*2*0*0*100*0*',
+	'boardstate*1*1*0*100*1*0*-1*-1*1000*',
+	'boardlayerstate*1*0*0*0',
+	'boardlayerstate*1*1*1*1',
+	'boardstate*2*0*0*100*0*-1*-1*-1*-1*',
+	'screenstate*1*3*',
+	'screenstate*2*1*',
+	'screenstate*3*4*',
+	'screenstate*4*2*',
+	'screenstate*5*0*',
 ]
 
 // [actionId, options, expected line]
@@ -116,7 +116,7 @@ test('every toggle action is tested', async () => {
 
 test('a toggle follows the state pushed by Producer', async () => {
 	const { producer, instance, recorded, cleanup } = await start()
-	producer.send('statetimeline*2*1*0*100*1')
+	producer.send('timelinestate*2*1*0*100*1*')
 	await waitFor(() => instance.state.timelines.get(2).playing)
 	const count = producer.lines.length
 	await runAction(recorded, 'timelinePlayPauseAction', { timelineId: 2 })
@@ -139,9 +139,9 @@ test('a toggle on an unknown object sends nothing', async () => {
 
 test('a toggle on an object without its state line sends nothing', async () => {
 	const { producer, instance, recorded, cleanup } = await start({
-		snapshot: ['nametimeline*5*X', 'statetimelinelayer*5*2*1*1*1', 'nameboard*6*Y', 'namescreen*7*Z'],
+		snapshot: ['timelinelayerstate*5*2*1*1*1', 'boardlayerstate*6*0*1*1'],
 	})
-	await waitFor(() => instance.state.screens.has(7))
+	await waitFor(() => instance.state.boards.has(6))
 	await expectNothingSent(
 		producer,
 		recorded,

@@ -44,6 +44,13 @@ function nameField(fields, index) {
 	return fields.length > index ? fields.slice(index).join('*') : undefined
 }
 
+// The state lines also come on each timecode jump: only a real rename changes the structure.
+function setName(state, object, name) {
+	if (object.name === name) return
+	object.name = name
+	state.changes.add(ChangeKind.Structure)
+}
+
 export class OnlyviewState {
 	constructor() {
 		this.changes = new Set()
@@ -101,7 +108,7 @@ export class OnlyviewState {
 	timeline(id, now) {
 		let t = this.timelines.get(id)
 		if (!t) {
-			// `known` is false until the state line: a name or layer line creates a placeholder.
+			// `known` is false until the state line: a layer or sequence line creates a placeholder.
 			t = { id, name: '', known: false, on: false, tc: 0, receivedAt: now, gm: 0, playing: false, layers: new Map() }
 			this.timelines.set(id, t)
 			this.changes.add(ChangeKind.Structure)
@@ -152,21 +159,15 @@ const HANDLERS = {
 		state.changes.add(ChangeKind.Fps)
 	},
 
-	nametimeline(state, fields, now) {
-		const id = toInt(fields[1])
-		const name = nameField(fields, 2)
-		if (id === undefined || name === undefined) return
-		state.timeline(id, now).name = name
-		state.changes.add(ChangeKind.Timeline).add(ChangeKind.Structure)
-	},
-
-	// statetimeline*<id>*<on>*<tc ms>*<gm>*<playState>
-	statetimeline(state, fields, now) {
+	// timelinestate*<id>*<on>*<tc ms>*<gm>*<playState>*<name>
+	timelinestate(state, fields, now) {
 		const id = toInt(fields[1])
 		const tc = toNumber(fields[3])
-		if (id === undefined || tc === undefined || fields.length < 6) return
+		const name = nameField(fields, 6)
+		if (id === undefined || tc === undefined || name === undefined) return
 		const t = state.timeline(id, now)
 		t.known = true
+		setName(state, t, name)
 		t.on = fields[2] === '1'
 		t.tc = tc
 		t.receivedAt = now
@@ -175,8 +176,8 @@ const HANDLERS = {
 		state.changes.add(ChangeKind.Timeline)
 	},
 
-	// statetimelinelayer*<tl>*<part>*<layerId>*<blind>*<solo>
-	statetimelinelayer(state, fields, now) {
+	// timelinelayerstate*<tl>*<part>*<layerId>*<blind>*<solo>
+	timelinelayerstate(state, fields, now) {
 		const id = toInt(fields[1])
 		const part = toInt(fields[2])
 		const layer = toInt(fields[3])
@@ -187,21 +188,16 @@ const HANDLERS = {
 		state.changes.add(ChangeKind.TimelineLayer)
 	},
 
-	nameboard(state, fields, now) {
-		const id = toInt(fields[1])
-		const name = nameField(fields, 2)
-		if (id === undefined || name === undefined) return
-		state.board(id, now).name = name
-		state.changes.add(ChangeKind.Board).add(ChangeKind.Structure)
-	},
-
-	// stateboard*<id>*<on>*<tc ms>*<gm>*<playState>*<column>*<enqueuedColumn>*<columnDuration ms>
-	stateboard(state, fields, now) {
+	// boardstate*<id>*<on>*<tc ms>*<gm>*<playState>*<column>*<enqueuedColumn>*<enqueuedPreset>
+	// *<columnDuration ms>*<name>
+	boardstate(state, fields, now) {
 		const id = toInt(fields[1])
 		const tc = toNumber(fields[3])
-		if (id === undefined || tc === undefined || fields.length < 7) return
+		const name = nameField(fields, 10)
+		if (id === undefined || tc === undefined || name === undefined) return
 		const b = state.board(id, now)
 		b.known = true
+		setName(state, b, name)
 		b.on = fields[2] === '1'
 		b.tc = tc
 		b.receivedAt = now
@@ -209,7 +205,7 @@ const HANDLERS = {
 		b.playing = toInt(fields[5]) === PlayState.Play
 		b.column = toInt(fields[6]) ?? -1
 		b.enqueuedColumn = toInt(fields[7]) ?? -1
-		b.columnDuration = toNumber(fields[8]) ?? -1
+		b.columnDuration = toNumber(fields[9]) ?? -1
 		state.changes.add(ChangeKind.Board)
 	},
 
@@ -223,8 +219,8 @@ const HANDLERS = {
 		state.changes.add(ChangeKind.BoardSequence)
 	},
 
-	// stateboardlayer*<board>*<layer>*<blind>*<solo>
-	stateboardlayer(state, fields, now) {
+	// boardlayerstate*<board>*<layer>*<blind>*<solo>
+	boardlayerstate(state, fields, now) {
 		const id = toInt(fields[1])
 		const layer = toInt(fields[2])
 		if (id === undefined || layer === undefined || fields.length < 5) return
@@ -232,25 +228,20 @@ const HANDLERS = {
 		state.changes.add(ChangeKind.BoardLayer)
 	},
 
-	namescreen(state, fields) {
-		const id = toInt(fields[1])
-		const name = nameField(fields, 2)
-		if (id === undefined || name === undefined) return
-		state.screen(id).name = name
-		state.changes.add(ChangeKind.Screen).add(ChangeKind.Structure)
-	},
-
-	screenstatus(state, fields) {
+	// screenstate*<id>*<status>*<name>
+	screenstate(state, fields) {
 		const id = toInt(fields[1])
 		const status = toInt(fields[2])
-		if (id === undefined || status === undefined) return
+		const name = nameField(fields, 3)
+		if (id === undefined || status === undefined || name === undefined) return
 		const s = state.screen(id)
 		s.known = true
+		setName(state, s, name)
 		s.status = status
 		state.changes.add(ChangeKind.Screen)
 	},
 
-	// A parent removal also drops its name, layers and sequences.
+	// A parent removal also drops its layers and sequences.
 	timelineremoved(state, fields) {
 		if (state.timelines.delete(toInt(fields[1])))
 			state.changes.add(ChangeKind.Timeline).add(ChangeKind.TimelineLayer).add(ChangeKind.Structure)

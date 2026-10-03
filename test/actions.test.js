@@ -12,7 +12,7 @@ let recorded
 before(async () => {
 	// Timeline 3 and board 7 are paused, for the play/pause toggles.
 	producer = await startFakeProducer({
-		snapshot: ['statetimeline*3*1*0*100*0', 'stateboard*7*1*0*100*0*-1*-1*-1'],
+		snapshot: ['timelinestate*3*1*0*100*0*', 'boardstate*7*1*0*100*0*-1*-1*-1*-1*'],
 	})
 	;({ instance, recorded } = await createModule({ host: '127.0.0.1', port: String(producer.port) }))
 	await waitFor(() => instance.protocol === Protocol.Subscribed && instance.state.boards.has(7))

@@ -8,25 +8,18 @@ import { FeedbackId, FEEDBACKS_BY_CHANGE, feedbacksForChanges } from '../feedbac
 // Timeline 1 plays, timeline 2 is paused and OFF. Board 1 plays sequence 3, sequence 5 is enqueued.
 const SNAPSHOT = [
 	'showframerate*25',
-	'nametimeline*1*A',
-	'statetimeline*1*1*1000*100*1',
-	'statetimelinelayer*1*0*1*0*0',
-	'statetimelinelayer*1*2*1*1*0',
-	'statetimelinelayer*1*2*2*0*1',
-	'nametimeline*2*B',
-	'statetimeline*2*0*0*100*0',
-	'nameboard*1*Main',
-	'stateboard*1*1*0*100*1*2*4*10000',
-	'stateboardlayer*1*0*1*0',
-	'stateboardlayer*1*1*0*1',
-	'nameboard*2*Other',
-	'stateboard*2*0*0*100*0*-1*-1*-1',
-	'namescreen*1*Left',
-	'screenstatus*1*3',
-	'namescreen*2*Right',
-	'screenstatus*2*1',
-	'namescreen*3*Back',
-	'screenstatus*3*4',
+	'timelinestate*1*1*1000*100*1*A',
+	'timelinelayerstate*1*0*1*0*0',
+	'timelinelayerstate*1*2*1*1*0',
+	'timelinelayerstate*1*2*2*0*1',
+	'timelinestate*2*0*0*100*0*B',
+	'boardstate*1*1*0*100*1*2*4*-1*10000*Main',
+	'boardlayerstate*1*0*1*0',
+	'boardlayerstate*1*1*0*1',
+	'boardstate*2*0*0*100*0*-1*-1*-1*-1*Other',
+	'screenstate*1*3*Left',
+	'screenstate*2*1*Right',
+	'screenstate*3*4*Back',
 ]
 
 async function subscribedModule(lines = SNAPSHOT) {
@@ -132,11 +125,11 @@ test('feedbacks follow the state changes', async () => {
 	instance.onData(
 		Buffer.from(
 			[
-				'statetimeline*1*0*1000*100*0',
-				'statetimelinelayer*1*2*1*0*1',
-				'stateboard*1*1*0*100*0*4*-1*-1',
-				'stateboardlayer*1*0*0*1',
-				'screenstatus*1*4',
+				'timelinestate*1*0*1000*100*0*A',
+				'timelinelayerstate*1*2*1*0*1',
+				'boardstate*1*1*0*100*0*4*-1*-1*-1*Main',
+				'boardlayerstate*1*0*0*1',
+				'screenstate*1*4*Left',
 			].join('\n') + '\n',
 		),
 	)
@@ -161,13 +154,7 @@ test('feedbacks follow the state changes', async () => {
 	await instance.destroy()
 })
 
-const PLACEHOLDERS = [
-	'nametimeline*5*X',
-	'statetimelinelayer*5*2*1*1*1',
-	'nameboard*6*Y',
-	'stateboardlayer*6*0*1*1',
-	'namescreen*7*Z',
-]
+const PLACEHOLDERS = ['timelinelayerstate*5*2*1*1*1', 'boardlayerstate*6*0*1*1']
 
 const PLACEHOLDER_CASES = [
 	[FeedbackId.TimelinePaused, { timelineId: 5 }],
@@ -176,17 +163,14 @@ const PLACEHOLDER_CASES = [
 	[FeedbackId.BoardPaused, { boardId: 6 }],
 	[FeedbackId.BoardLayerBlind, { boardId: 6, layerId: 1 }],
 	[FeedbackId.BoardLayerSolo, { boardId: 6, layerId: 1 }],
-	[FeedbackId.DisplayStatus, { displayId: 7, status: 0 }],
 ]
 
 test('objects without their state line are false', async () => {
-	// A packet can end between the name line and the state line.
+	// A packet can end between a layer line and the state line.
 	const { instance, recorded } = await subscribedModule(PLACEHOLDERS)
 	for (const [id, options] of PLACEHOLDER_CASES) assert.equal(check(recorded, id, options), false, id)
 
-	instance.onData(
-		Buffer.from(['statetimeline*5*0*0*100*0', 'stateboard*6*0*0*100*0*-1*-1*-1', 'screenstatus*7*0', ''].join('\n')),
-	)
+	instance.onData(Buffer.from(['timelinestate*5*0*0*100*0*', 'boardstate*6*0*0*100*0*-1*-1*-1*-1*', ''].join('\n')))
 	for (const [id, options] of PLACEHOLDER_CASES) assert.equal(check(recorded, id, options), true, id)
 	await instance.destroy()
 })
@@ -224,11 +208,11 @@ test('a disconnection checks all the feedbacks again', async () => {
 test('each change kind checks only its feedbacks', async () => {
 	const { instance, recorded } = await subscribedModule()
 	const cases = [
-		['statetimeline*1*1*1000*100*0', FEEDBACKS_BY_CHANGE[ChangeKind.Timeline]],
-		['statetimelinelayer*1*2*1*0*0', FEEDBACKS_BY_CHANGE[ChangeKind.TimelineLayer]],
-		['stateboard*1*1*0*100*1*3*4*10000', FEEDBACKS_BY_CHANGE[ChangeKind.Board]],
-		['stateboardlayer*1*0*0*0', FEEDBACKS_BY_CHANGE[ChangeKind.BoardLayer]],
-		['screenstatus*1*1', [FeedbackId.DisplayStatus]],
+		['timelinestate*1*1*1000*100*0*A', FEEDBACKS_BY_CHANGE[ChangeKind.Timeline]],
+		['timelinelayerstate*1*2*1*0*0', FEEDBACKS_BY_CHANGE[ChangeKind.TimelineLayer]],
+		['boardstate*1*1*0*100*1*3*4*-1*10000*Main', FEEDBACKS_BY_CHANGE[ChangeKind.Board]],
+		['boardlayerstate*1*0*0*0', FEEDBACKS_BY_CHANGE[ChangeKind.BoardLayer]],
+		['screenstate*1*1*Left', [FeedbackId.DisplayStatus]],
 		['showframerate*50', []],
 		['nameboardsequence*1*0*Intro', []],
 	]

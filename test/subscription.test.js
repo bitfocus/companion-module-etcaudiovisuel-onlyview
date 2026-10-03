@@ -19,19 +19,15 @@ const TIMELINE_NAME = 'Intro * Scène 1 ✓'
 function showSnapshot() {
 	const lines = ['showframerate*25']
 	for (const id of [1, 2]) {
-		lines.push(`nametimeline*${id}*${id === 1 ? TIMELINE_NAME : 'Timeline 2'}`)
-		lines.push(`statetimeline*${id}*1*${id * 1000}*100*0`)
-		for (let layer = 1; layer <= 4; layer++) lines.push(`statetimelinelayer*${id}*0*${layer}*0*0`)
-		for (let layer = 1; layer <= 40; layer++) lines.push(`statetimelinelayer*${id}*2*${layer}*0*0`)
+		lines.push(`timelinestate*${id}*1*${id * 1000}*100*0*${id === 1 ? TIMELINE_NAME : 'Timeline 2'}`)
+		for (let layer = 1; layer <= 4; layer++) lines.push(`timelinelayerstate*${id}*0*${layer}*0*0`)
+		for (let layer = 1; layer <= 40; layer++) lines.push(`timelinelayerstate*${id}*2*${layer}*0*0`)
 	}
-	lines.push('nameboard*1*Main board')
-	lines.push('stateboard*1*1*2000*80*0*2*4*10000')
+	lines.push('boardstate*1*1*2000*80*0*2*4*-1*10000*Main board')
 	for (let column = 0; column < 50; column++) lines.push(`nameboardsequence*1*${column}*${column === 2 ? 'Seq*3' : ''}`)
-	for (let layer = 0; layer < 10; layer++) lines.push(`stateboardlayer*1*${layer}*0*0`)
-	lines.push('namescreen*1*Left')
-	lines.push('screenstatus*1*3')
-	lines.push('namescreen*2*Right')
-	lines.push('screenstatus*2*1')
+	for (let layer = 0; layer < 10; layer++) lines.push(`boardlayerstate*1*${layer}*0*0`)
+	lines.push('screenstate*1*3*Left')
+	lines.push('screenstate*2*1*Right')
 	return lines
 }
 
@@ -101,13 +97,18 @@ test('a change only sends the changed variables', async () => {
 	const { producer, recorded, cleanup } = await startSubscribed()
 	const before = recorded.variableValueCalls.length
 
-	await sendLines(producer, recorded, ['statetimeline*2*0*2000*50*0'], () => recorded.variableValues.tl_2_gm === 50)
+	await sendLines(
+		producer,
+		recorded,
+		['timelinestate*2*0*2000*50*0*Timeline 2'],
+		() => recorded.variableValues.tl_2_gm === 50,
+	)
 	assert.deepEqual(recorded.variableValueCalls.slice(before), [{ tl_2_on: 'OFF', tl_2_gm: 50 }])
 
 	await sendLines(
 		producer,
 		recorded,
-		['stateboard*1*1*0*80*0*3*-1*-1', 'screenstatus*2*4'],
+		['boardstate*1*1*0*80*0*3*-1*-1*-1*Main board', 'screenstate*2*4*Right'],
 		() => recorded.variableValues.display_2_status === 'Error',
 	)
 	const v = recorded.variableValues
@@ -119,14 +120,11 @@ test('a change only sends the changed variables', async () => {
 	assert.equal(v.board_1_remaining, '')
 	assert.equal(v.board_1_remaining_ms, '')
 
-	// A poll reply has no queue and no duration.
-	await sendLines(producer, recorded, ['stateboard*1*1*0*80*0*-1'], () => recorded.variableValues.board_1_seq === '')
-
 	// A rename changes the label of the definitions too.
 	await sendLines(
 		producer,
 		recorded,
-		['nametimeline*2*Ending ** 終'],
+		['timelinestate*2*0*2000*50*0*Ending ** 終'],
 		() => recorded.variableDefinitions.tl_2_name.name === 'Timeline 2 (Ending ** 終): name',
 	)
 	assert.equal(v.tl_2_name, 'Ending ** 終')
@@ -157,8 +155,13 @@ test('removals drop the objects and their children', async () => {
 	assert.ok(ids.includes('tl_2_name'))
 	assert.ok(!ids.some((id) => id.startsWith('board_1_') || id.startsWith('display_2_')))
 
-	// A later name line creates the object again.
-	await sendLines(producer, recorded, ['nameboard*1*Back'], () => 'board_1_name' in recorded.variableDefinitions)
+	// A later state line creates the object again.
+	await sendLines(
+		producer,
+		recorded,
+		['boardstate*1*1*0*80*0*-1*-1*-1*-1*Back'],
+		() => 'board_1_name' in recorded.variableDefinitions,
+	)
 	assert.equal(recorded.variableValues.board_1_name, 'Back')
 	assert.equal(state.boards.get(1).sequenceNames.size, 0)
 	await cleanup()
@@ -169,7 +172,7 @@ test('subscribed drops the old state', async () => {
 	await sendLines(
 		producer,
 		recorded,
-		['subscribed*1', 'showframerate*50', 'nametimeline*2*Only', 'statetimeline*2*1*20*100*0'],
+		['subscribed*1', 'showframerate*50', 'timelinestate*2*1*20*100*0*Only'],
 		() => !('tl_1_name' in recorded.variableDefinitions),
 	)
 	assert.deepEqual(Object.keys(recorded.variableDefinitions).sort(), [
@@ -220,7 +223,7 @@ test('the clocks run locally while playing', async () => {
 	})
 	const feed = (...lines) => instance.onData(Buffer.from(lines.map((l) => l + '\n').join(''), 'utf8'))
 
-	feed('subscribed*1', 'showframerate*25', 'statetimeline*1*1*1000*100*1', 'stateboard*1*1*0*100*1*0*-1*5000')
+	feed('subscribed*1', 'showframerate*25', 'timelinestate*1*1*1000*100*1*', 'boardstate*1*1*0*100*1*0*-1*-1*5000*')
 	await waitFor(() => 'tl_1_tc' in recorded.variableDefinitions)
 	assert.ok(instance.clockTimer)
 	assert.equal(recorded.variableValues.tl_1_tc, '00:00:01:00')
@@ -234,7 +237,7 @@ test('the clocks run locally while playing', async () => {
 	assert.equal(recorded.variableValues.board_1_remaining_ms, 3500)
 
 	// A resent line (jump) restarts the interpolation from its tc.
-	feed('statetimeline*1*1*60000*100*1')
+	feed('timelinestate*1*1*60000*100*1*')
 	now += 40
 	await waitFor(() => recorded.variableValues.tl_1_tc === '00:01:00:01')
 	// Past the end of the sequence: 0 ms, and 00:00:01 like the countdown of Producer.
@@ -243,7 +246,7 @@ test('the clocks run locally while playing', async () => {
 	assert.equal(recorded.variableValues.board_1_remaining, '00:00:01')
 
 	// Paused: the tc is the one of the line, and the timer stops.
-	feed('statetimeline*1*1*5000*100*0', 'stateboard*1*1*1234*100*0*0*-1*5000')
+	feed('timelinestate*1*1*5000*100*0*', 'boardstate*1*1*1234*100*0*0*-1*-1*5000*')
 	assert.equal(recorded.variableValues.tl_1_tc, '00:00:05:00')
 	assert.equal(recorded.variableValues.tl_1_state, 'Pause')
 	assert.equal(instance.clockTimer, undefined)
@@ -252,11 +255,11 @@ test('the clocks run locally while playing', async () => {
 	assert.equal(recorded.variableValues.tl_1_tc, '00:00:05:00')
 
 	// 29.97 is shown as 29 fps, with no drop frame
-	feed('showframerate*29.97', 'statetimeline*1*1*60061*100*0')
+	feed('showframerate*29.97', 'timelinestate*1*1*60061*100*0*')
 	assert.equal(recorded.variableValues.tl_1_tc, '00:01:00:01')
 	assert.equal(recorded.variableValues.show_fps, 29.97)
 
-	feed('statetimeline*1*1*0*100*1')
+	feed('timelinestate*1*1*0*100*1*')
 	assert.ok(instance.clockTimer)
 	await instance.destroy()
 	assert.equal(instance.clockTimer, undefined)
@@ -268,7 +271,7 @@ test('the values are sent only when the text changes', async () => {
 		Object.assign(i.timing, FAST_TIMING)
 		i.now = () => now
 	})
-	instance.onData(Buffer.from('subscribed*1\nshowframerate*25\nstatetimeline*1*1*0*100*1\n'))
+	instance.onData(Buffer.from('subscribed*1\nshowframerate*25\ntimelinestate*1*1*0*100*1*\n'))
 	await waitFor(() => 'tl_1_tc' in recorded.variableDefinitions)
 	const before = recorded.variableValueCalls.length
 	instance.updateVariables()
@@ -285,7 +288,7 @@ test('state changes are reported by kind, for the feedbacks', async () => {
 	const { instance } = await createModule({ host: '' })
 	const reported = []
 	instance.stateChanged = (changes) => reported.push([...changes].sort())
-	instance.onData(Buffer.from('subscribed*1\nstatetimelinelayer*1*2*3*1*0\nscreenstatus*4*3\n'))
+	instance.onData(Buffer.from('subscribed*1\ntimelinelayerstate*1*2*3*1*0\nscreenstate*4*3*\n'))
 	assert.deepEqual(reported.at(-1), [
 		ChangeKind.Board,
 		ChangeKind.BoardLayer,
@@ -297,7 +300,7 @@ test('state changes are reported by kind, for the feedbacks', async () => {
 		ChangeKind.Timeline,
 		ChangeKind.TimelineLayer,
 	])
-	instance.onData(Buffer.from('statetimelinelayer*1*2*3*0*0\n'))
+	instance.onData(Buffer.from('timelinelayerstate*1*2*3*0*0\n'))
 	assert.deepEqual(reported.at(-1), [ChangeKind.TimelineLayer])
 	assert.equal(instance.state.timelines.get(1).layers.get('2*3').blind, false)
 	// Nothing changes: no report
@@ -309,7 +312,7 @@ test('state changes are reported by kind, for the feedbacks', async () => {
 
 test('an empty sequence shows 00:00:00, like Producer', async () => {
 	const { instance, recorded } = await createModule({ host: '' })
-	instance.onData(Buffer.from('subscribed*1\nshowframerate*25\nstateboard*1*1*0*100*1*0*-1*0\n'))
+	instance.onData(Buffer.from('subscribed*1\nshowframerate*25\nboardstate*1*1*0*100*1*0*-1*-1*0*\n'))
 	await waitFor(() => 'board_1_remaining' in recorded.variableDefinitions)
 	assert.equal(recorded.variableValues.board_1_remaining, '00:00:00')
 	assert.equal(recorded.variableValues.board_1_remaining_ms, 0)
@@ -318,10 +321,10 @@ test('an empty sequence shows 00:00:00, like Producer', async () => {
 
 test('state lines outside a subscription are ignored', async () => {
 	const { instance, recorded } = await createModule({ host: '' })
-	instance.onData(Buffer.from('showframerate*25\nnametimeline*1*A\nstatetimeline*1*1*0*100*0\n'))
+	instance.onData(Buffer.from('showframerate*25\ntimelinestate*1*1*0*100*0*A\n'))
 	assert.equal(instance.state.timelines.size, 0)
 	assert.equal(instance.state.fps, undefined)
-	assert.equal(recorded.logs.filter((log) => /Unhandled message/.test(log.message)).length, 3)
+	assert.equal(recorded.logs.filter((log) => /Unhandled message/.test(log.message)).length, 2)
 	await instance.destroy()
 })
 
@@ -336,7 +339,7 @@ test('a re-subscribe to an empty show removes the variables', async () => {
 test('subscribed without a valid version is an old Producer', async () => {
 	for (const line of ['subscribed', 'subscribed*0', 'subscribed*x', 'subscribed*1.5']) {
 		const { instance } = await createModule({ host: '' })
-		instance.onData(Buffer.from(`${line}\nnametimeline*1*A\n`))
+		instance.onData(Buffer.from(`${line}\ntimelinestate*1*1*0*100*0*A\n`))
 		assert.equal(instance.protocol, Protocol.Legacy, line)
 		assert.equal(instance.state.subscribed, false, line)
 		assert.equal(instance.state.timelines.size, 0, line)
@@ -352,8 +355,9 @@ test('malformed state lines are ignored', async () => {
 	const { instance, recorded } = await createModule({ host: '' })
 	instance.onData(
 		Buffer.from(
-			'subscribed*1\nstatetimeline*x*1*0*100*0\nstatetimeline*1*1\nstateboard*2*1*abc*0*0*0\nnametimeline*3\n' +
-				'statetimeline*1.0*1*0*100*0\nstatetimeline*1e0*1*0*100*0\nnametimeline* 4*A\nscreenstatus*5*0x3\n',
+			'subscribed*1\ntimelinestate*x*1*0*100*0*A\ntimelinestate*1*1*0*100\nboardstate*2*1*abc*0*0*0*-1*-1*-1*B\n' +
+				'timelinestate*3*1*0*100*0\ntimelinestate*1.0*1*0*100*0*A\ntimelinestate*1e0*1*0*100*0*A\n' +
+				'timelinestate* 4*1*0*100*0*A\nscreenstate*5*0x3*C\n',
 		),
 	)
 	assert.equal(instance.state.timelines.size, 0)
@@ -452,11 +456,7 @@ test('a recent Producer: no tc= warning', async () => {
 })
 
 test('destroy stops all the timers', async () => {
-	const { instance, cleanup } = await startSubscribed([
-		'showframerate*25',
-		'nametimeline*1*A',
-		'statetimeline*1*1*0*100*1',
-	])
+	const { instance, cleanup } = await startSubscribed(['showframerate*25', 'timelinestate*1*1*0*100*1*A'])
 	await waitFor(() => instance.clockTimer !== undefined)
 	await cleanup()
 	assert.equal(instance.clockTimer, undefined)

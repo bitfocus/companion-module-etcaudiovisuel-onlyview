@@ -8,21 +8,15 @@ import { variableDefinitions } from '../variables.js'
 
 const SNAPSHOT = [
 	'showframerate*25',
-	'nametimeline*1*Intro',
-	'statetimeline*1*1*0*100*0',
-	'nametimeline*4*Show',
-	'statetimeline*4*1*0*100*1',
-	'nameboard*2*Main',
-	'stateboard*2*1*0*100*1*0*-1*10000',
+	'timelinestate*1*1*0*100*0*Intro',
+	'timelinestate*4*1*0*100*1*Show',
+	'boardstate*2*1*0*100*1*0*-1*-1*10000*Main',
 	'nameboardsequence*2*0*Opening',
 	'nameboardsequence*2*1*',
 	'nameboardsequence*2*2*Finale $(custom:x)',
-	'nameboard*3*Empty',
-	'stateboard*3*0*0*100*0*-1*-1*-1',
-	'namescreen*1*Left',
-	'screenstatus*1*3',
-	'namescreen*5*Right',
-	'screenstatus*5*1',
+	'boardstate*3*0*0*100*0*-1*-1*-1*-1*Empty',
+	'screenstate*1*3*Left',
+	'screenstate*5*1*Right',
 ]
 
 // Destroys the instance when the test ends, also on failure: its timers would keep node alive.
@@ -213,7 +207,11 @@ test('presets: id 1 when Producer sent nothing', async (t) => {
 	for (const id of ['tl_1_playpause', 'board_1_playpause', 'board_1_seq_1', 'board_1_seq_4', 'display_1_status'])
 		assert.ok(ids.includes(id), id)
 	assert.ok(!ids.includes('board_1_seq_5'))
-	checkTextVariables(recorded, ['statetimeline*1*1*0*100*0', 'stateboard*1*1*0*100*0*-1*-1*-1', 'screenstatus*1*3'])
+	checkTextVariables(recorded, [
+		'timelinestate*1*1*0*100*0*Intro',
+		'boardstate*1*1*0*100*0*-1*-1*-1*-1*',
+		'screenstate*1*3*Left',
+	])
 })
 
 test('presets: kept on disconnect, rebuilt on a new id and a new label', async (t) => {
@@ -226,7 +224,9 @@ test('presets: kept on disconnect, rebuilt on a new id and a new label', async (
 	assert.deepEqual(presetIds(recorded), before)
 	assert.equal(recorded.presetCalls, calls, 'no rebuild when nothing changed')
 
-	instance.onData(Buffer.from(['subscribed*1', ...SNAPSHOT, 'nametimeline*7*New'].map((l) => l + '\n').join('')))
+	instance.onData(
+		Buffer.from(['subscribed*1', ...SNAPSHOT, 'timelinestate*7*1*0*100*0*New'].map((l) => l + '\n').join('')),
+	)
 	instance.updateDefinitions()
 	assert.ok(presetIds(recorded).includes('tl_7_playpause'))
 
@@ -248,10 +248,10 @@ test('presets: built once the structure changes stop', async (t) => {
 	const calls = recorded.presetCalls
 
 	// A snapshot in several packets, closer together than definitionsMs.
-	feed('subscribed*1', 'statetimeline*1*1*0*100*0')
+	feed('subscribed*1', 'timelinestate*1*1*0*100*0*Intro')
 	for (const id of [2, 3, 4]) {
 		await new Promise((resolve) => setTimeout(resolve, 20))
-		feed(`statetimeline*${id}*1*0*100*0`)
+		feed(`timelinestate*${id}*1*0*100*0*`)
 	}
 	await waitFor(() => !instance.definitionsTimer)
 	assert.equal(recorded.presetCalls, calls + 1, 'one build, from the full show')
@@ -270,7 +270,7 @@ test('presets: a constant stream of changes waits at most definitionsMaxMs', asy
 	let id = 50
 	while (!presetIds(recorded).includes('tl_50_playpause')) {
 		assert.ok(performance.now() - start < 1000, 'the presets were never built')
-		feed(`statetimeline*${id++}*1*0*100*0`)
+		feed(`timelinestate*${id++}*1*0*100*0*`)
 		await new Promise((resolve) => setTimeout(resolve, 10))
 	}
 })
