@@ -5,6 +5,8 @@ import {
 	findScreen,
 	findTimeline,
 	findTimelineLayer,
+	parseSequence,
+	sequenceListOption,
 	timelineLayerPart,
 } from './feedbacks.js'
 import { StateMode } from './upgrades.js'
@@ -64,6 +66,35 @@ export default function (self) {
 	function idOption(idStr, labelStr, maxValue) {
 		return { ...numberOption(idStr, labelStr, 1, maxValue, 1), asInteger: true }
 	}
+
+	// Board sequences and presets are 1-based in the options, 0-based in Producer.
+	function playSequence(boardId, sequenceId, options) {
+		// -1 means no preset override.
+		const preset = options.overridePreset ? options.presetId - 1 : -1
+		const clearQueue = options.clearQueue ? 1 : 0
+		// allowCrossfade = 1, locator = 0 (main).
+		sendTcp('playBoard*' + boardId + '*' + (sequenceId - 1) + '*1*0*' + preset + '*' + clearQueue + '\n')
+	}
+
+	// Without a preset Id, the board uses the preset of the sequence.
+	function enqueueSequence(boardId, sequenceId, presetId = undefined) {
+		const preset = presetId === undefined ? -1 : presetId - 1
+		sendTcp('enqueueSequenceAndPreset*' + boardId + '*' + (sequenceId - 1) + '*' + preset + '\n')
+	}
+
+	// Calls `run` with the board and sequence of a sequence list, or logs a warning.
+	function withListedSequence(actionName, value, run) {
+		const target = parseSequence(value)
+		if (target) return run(target.boardId, target.sequenceId)
+		self.log('warn', `${actionName}: invalid sequence "${value}", use <board id>*<sequence number>`)
+	}
+
+	const sequenceListOptions = () => sequenceListOption(self.presetObjects?.boards ?? [])
+	const playSequenceOptions = () => [
+		{ ...stateOption('overridePreset', 'Override preset'), default: false, disableAutoExpression: true },
+		{ ...idOption('presetId', 'Preset Id', 99), isVisibleExpression: '$(options:overridePreset)' },
+		{ ...stateOption('clearQueue', 'Clear queue'), default: false },
+	]
 
 	// Onlyview parses the fade time in integer milliseconds.
 	function fadeTimeMs(seconds) {
@@ -487,12 +518,16 @@ export default function (self) {
 		boardEnqueueSequenceAction: {
 			name: 'Board enqueue sequence',
 			options: [idOption('boardId', 'Board Id', 99), idOption('sequenceId', 'Sequence Id', 999)],
-			callback: async (action) => {
-				// Onlyview's API expects board sequences Id to start at 0.
-				const sequence = action.options.sequenceId - 1
-				const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' + sequence + '*-1\n'
-				sendTcp(str)
-			},
+			callback: async (action) => enqueueSequence(action.options.boardId, action.options.sequenceId),
+		},
+
+		boardEnqueueSequenceFromListAction: {
+			name: 'Board enqueue sequence (from list)',
+			options: [sequenceListOptions()],
+			callback: async (action) =>
+				withListedSequence('Board enqueue sequence (from list)', action.options.sequence, (boardId, sequenceId) =>
+					enqueueSequence(boardId, sequenceId),
+				),
 		},
 
 		boardEnqueueSequenceAndPresetAction: {
@@ -502,13 +537,8 @@ export default function (self) {
 				idOption('sequenceId', 'Sequence Id', 999),
 				idOption('presetId', 'Preset Id', 99),
 			],
-			callback: async (action) => {
-				// Onlyview's API expects board sequences Id to start at 0.
-				const sequence = action.options.sequenceId - 1
-				const preset = action.options.presetId - 1
-				const str = 'enqueueSequenceAndPreset*' + action.options.boardId + '*' + sequence + '*' + preset + '\n'
-				sendTcp(str)
-			},
+			callback: async (action) =>
+				enqueueSequence(action.options.boardId, action.options.sequenceId, action.options.presetId),
 		},
 
 		boardPlaySequenceAction: {
@@ -516,20 +546,18 @@ export default function (self) {
 			options: [
 				idOption('boardId', 'Board Id', 99),
 				idOption('sequenceId', 'Sequence Id', 999),
-				{ ...stateOption('overridePreset', 'Override preset'), default: false, disableAutoExpression: true },
-				{ ...idOption('presetId', 'Preset Id', 99), isVisibleExpression: '$(options:overridePreset)' },
-				{ ...stateOption('clearQueue', 'Clear queue'), default: false },
+				...playSequenceOptions(),
 			],
-			callback: async (action) => {
-				// Onlyview's API expects board sequences and presets Id to start at 0.
-				const sequence = action.options.sequenceId - 1
-				// -1 means no preset override.
-				const preset = action.options.overridePreset ? action.options.presetId - 1 : -1
-				const clearQueue = action.options.clearQueue ? 1 : 0
-				// allowCrossfade = 1, locator = 0 (main).
-				const str = 'playBoard*' + action.options.boardId + '*' + sequence + '*1*0*' + preset + '*' + clearQueue + '\n'
-				sendTcp(str)
-			},
+			callback: async (action) => playSequence(action.options.boardId, action.options.sequenceId, action.options),
+		},
+
+		boardPlaySequenceFromListAction: {
+			name: 'Board play sequence (from list)',
+			options: [sequenceListOptions(), ...playSequenceOptions()],
+			callback: async (action) =>
+				withListedSequence('Board play sequence (from list)', action.options.sequence, (boardId, sequenceId) =>
+					playSequence(boardId, sequenceId, action.options),
+				),
 		},
 
 		boardNextAction: {

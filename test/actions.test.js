@@ -101,6 +101,13 @@ const cases = [
 	['timelineGrandMasterAction', { timelineId: 2, value: -5, fadeTime: 0.3 }, 'setgrandmaster*2*0*300'],
 	['boardEnqueueSequenceAction', { boardId: 1, sequenceId: 999 }, 'enqueueSequenceAndPreset*1*998*-1'],
 	['boardPlaySequenceAction', { boardId: 1, sequenceId: 250 }, 'playBoard*1*249*1*0*-1*0'],
+	['boardPlaySequenceFromListAction', { sequence: '7*3' }, 'playBoard*7*2*1*0*-1*0'],
+	[
+		'boardPlaySequenceFromListAction',
+		{ sequence: ' 2*10 ', overridePreset: true, presetId: 2, clearQueue: true },
+		'playBoard*2*9*1*0*1*1',
+	],
+	['boardEnqueueSequenceFromListAction', { sequence: '7*5' }, 'enqueueSequenceAndPreset*7*4*-1'],
 	['boardLayerOnOffStateAction', { boardId: 1, layerId: 1, mode: 'on' }, 'setBoardLayerBlind*1*0*0'],
 	['boardLayerSoloStateAction', { boardId: 1, layerId: 2, mode: 'on' }, 'setBoardLayerSolo*1*1*1'],
 	['timelineOnOffStateAction', { timelineId: 2, mode: 'on' }, 'settimelineon*2*1'],
@@ -264,6 +271,18 @@ test('online and offline with an invalid Display Id send nothing', async () => {
 			)
 		}
 	}
+	await runAction(recorded, 'boardPreviousAction', { boardId: 3 })
+	await producer.waitForLines(count + 1)
+	assert.deepEqual(producer.lines.slice(count), ['boardPlayPrevious*3'])
+})
+
+test('an invalid listed sequence sends nothing', async () => {
+	const count = producer.lines.length
+	const warnCount = recorded.logs.filter((log) => log.level === 'warn').length
+	for (const sequence of ['', 'abc', '7', '7*0', '7*-1', '1.5*2'])
+		await runAction(recorded, 'boardPlaySequenceFromListAction', { sequence })
+	await runAction(recorded, 'boardEnqueueSequenceFromListAction', { sequence: 'x*y' })
+	assert.equal(recorded.logs.filter((log) => log.level === 'warn').length, warnCount + 7)
 	await runAction(recorded, 'boardPreviousAction', { boardId: 3 })
 	await producer.waitForLines(count + 1)
 	assert.deepEqual(producer.lines.slice(count), ['boardPlayPrevious*3'])

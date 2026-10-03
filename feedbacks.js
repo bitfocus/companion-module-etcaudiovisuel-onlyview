@@ -21,6 +21,8 @@ export const FeedbackId = Object.freeze({
 	BoardOn: 'boardOn',
 	BoardCurrentSequence: 'boardCurrentSequence',
 	BoardEnqueuedSequence: 'boardEnqueuedSequence',
+	BoardCurrentSequenceFromList: 'boardCurrentSequenceFromList',
+	BoardEnqueuedSequenceFromList: 'boardEnqueuedSequenceFromList',
 	BoardLayerBlind: 'boardLayerBlind',
 	BoardLayerSolo: 'boardLayerSolo',
 	DisplayStatus: 'displayStatus',
@@ -39,6 +41,8 @@ export const FEEDBACKS_BY_CHANGE = Object.freeze({
 		FeedbackId.BoardOn,
 		FeedbackId.BoardCurrentSequence,
 		FeedbackId.BoardEnqueuedSequence,
+		FeedbackId.BoardCurrentSequenceFromList,
+		FeedbackId.BoardEnqueuedSequenceFromList,
 	],
 	[ChangeKind.BoardLayer]: [FeedbackId.BoardLayerBlind, FeedbackId.BoardLayerSolo],
 	[ChangeKind.BoardSequence]: [],
@@ -87,6 +91,42 @@ export function findScreen(state, displayId) {
 	return findKnown(state, state.screens, displayId)
 }
 
+/**
+ * The sequence lists: one choice per named sequence, with the id "<board id>*<sequence number>".
+ * `boards` comes from presetModel, so the list is kept on disconnect, like the presets.
+ */
+export function sequenceListOption(boards) {
+	const choices = []
+	for (const board of boards) {
+		const boardLabel = board.name ? `Board ${board.id} (${board.name})` : `Board ${board.id}`
+		for (const { number, name } of board.sequences)
+			if (name) choices.push({ id: `${board.id}*${number}`, label: `${boardLabel} – Seq ${number}: ${name}` })
+	}
+	return {
+		type: 'dropdown',
+		id: 'sequence',
+		label: 'Sequence',
+		description: 'The named sequences of the show. Or type <board id>*<sequence number>, for example 1*3.',
+		choices,
+		default: choices[0]?.id ?? '1*1',
+		allowCustom: true,
+		regex: '/^\\d+\\*\\d+$/',
+	}
+}
+
+/** "<board id>*<sequence number>" -> { boardId, sequenceId }, or undefined. Custom values are strings. */
+export function parseSequence(value) {
+	const match = /^(\d+)\*(\d+)$/.exec(String(value ?? '').trim())
+	if (!match || Number(match[2]) < 1) return undefined
+	return { boardId: Number(match[1]), sequenceId: Number(match[2]) }
+}
+
+// `key` is the 0-based column of the board state: column or enqueuedColumn.
+function isSequence(state, value, key) {
+	const target = parseSequence(value)
+	return target !== undefined && findBoard(state, target.boardId)?.[key] === target.sequenceId - 1
+}
+
 function idOption(id, label, max) {
 	return { type: 'number', id, label, default: 1, min: 1, max, asInteger: true }
 }
@@ -108,6 +148,7 @@ const style = (bgcolor, color = BLACK) => ({ bgcolor, color })
 
 export default function UpdateFeedbacks(self) {
 	const state = self.state
+	const boards = self.presetObjects?.boards ?? []
 
 	self.setFeedbackDefinitions({
 		[FeedbackId.ProducerConnected]: {
@@ -205,6 +246,22 @@ export default function UpdateFeedbacks(self) {
 				const column = findBoard(state, fb.options.boardId)?.enqueuedColumn
 				return column !== undefined && column >= 0 && column === Number(fb.options.sequenceId) - 1
 			},
+		},
+
+		[FeedbackId.BoardCurrentSequenceFromList]: {
+			type: 'boolean',
+			name: 'Board current sequence is (from list)',
+			defaultStyle: style(GREEN),
+			options: [sequenceListOption(boards)],
+			callback: (fb) => isSequence(state, fb.options.sequence, 'column'),
+		},
+
+		[FeedbackId.BoardEnqueuedSequenceFromList]: {
+			type: 'boolean',
+			name: 'Board enqueued sequence is (from list)',
+			defaultStyle: style(ORANGE),
+			options: [sequenceListOption(boards)],
+			callback: (fb) => isSequence(state, fb.options.sequence, 'enqueuedColumn'),
 		},
 
 		[FeedbackId.BoardLayerBlind]: {

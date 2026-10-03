@@ -388,6 +388,9 @@ export default class ModuleInstance extends InstanceBase {
 		this.presetsKey = key
 		const { structure, presets } = presetDefinitions(this.presetObjects, this.label)
 		this.setPresetDefinitions(structure, presets)
+		// The sequence lists of the actions and feedbacks use the same model.
+		this.updateActions()
+		this.updateFeedbacks()
 	}
 
 	// Sends only the values that changed.

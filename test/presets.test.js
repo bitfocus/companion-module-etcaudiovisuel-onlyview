@@ -220,6 +220,32 @@ test('presets: one button per quick key of the show', async (t) => {
 	assert.ok(!('quickkey_20_name' in recorded.variableDefinitions))
 })
 
+test('the sequence lists contain the named sequences of the show', async (t) => {
+	const { instance, recorded } = await moduleWith(t, SNAPSHOT)
+	const expected = [
+		{ id: '2*1', label: 'Board 2 (Main) – Seq 1: Opening' },
+		{ id: '2*3', label: 'Board 2 (Main) – Seq 3: Finale $(custom:x)' },
+	]
+	const lists = [
+		recorded.actionDefinitions.boardPlaySequenceFromListAction.options[0],
+		recorded.actionDefinitions.boardEnqueueSequenceFromListAction.options[0],
+		recorded.feedbackDefinitions.boardCurrentSequenceFromList.options[0],
+		recorded.feedbackDefinitions.boardEnqueuedSequenceFromList.options[0],
+	]
+	for (const list of lists) {
+		assert.deepEqual(list.choices, expected)
+		assert.equal(list.default, '2*1')
+		assert.equal(list.allowCustom, true)
+	}
+
+	instance.onData(Buffer.from('nameboardsequence*2*1*Interlude\n'))
+	instance.updateDefinitions()
+	assert.deepEqual(
+		recorded.actionDefinitions.boardPlaySequenceFromListAction.options[0].choices.map((c) => c.id),
+		['2*1', '2*2', '2*3'],
+	)
+})
+
 test('presets: id 1 when Producer sent nothing', async (t) => {
 	const { recorded } = await moduleWith(t, undefined)
 	checkPresets(recorded)

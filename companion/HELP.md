@@ -38,6 +38,12 @@ The connection status:
 
 All number fields can also be set with an expression, for example `$(custom:board)`.
 
+### Sequence lists
+
+The actions and feedbacks marked "(from list)" choose a board sequence by its name. The list contains the named sequences of all the boards of the open show, for example "Board 1 (Main) – Seq 3: Finale". It follows the show: a new or renamed sequence appears in the list. Without a connection, the list stays as it was.
+
+To use a sequence that is not in the list (no name, or another show), type `<board id>*<sequence number>`, for example `1*3`.
+
 ### Timecodes
 
 The locate actions take a timecode as text: `HH:MM:SS:FF` or `HH:MM:SS`, for example `00:01:30:12`. `FF` is a frame number, in the framerate of the show. Timecodes match what Producer shows on the timeline:
@@ -125,6 +131,7 @@ All the feedbacks are boolean: they change the style of the button when they are
 - **Board is playing** / **Board is paused** / **Board is ON**: Board Id.
 - **Board current sequence is**: the sequence plays now. Board Id and Sequence Id, counted from 1.
 - **Board enqueued sequence is**: the sequence plays after the current one.
+- **Board current sequence is (from list)**, **Board enqueued sequence is (from list)**: the same, with the sequence chosen in a list (see _Sequence lists_).
 - **Board layer is OFF (blind)** / **Board layer is solo**: Board Id and layer, counted from 1.
 - **Display status is**: Display Id and a status: Connected, Offline, Error, Connecting or Idle. It matches `display_<id>_status`.
 
@@ -193,6 +200,7 @@ Boards:
 - **Board enqueue sequence**: the sequence plays after the current one.
 - **Board enqueue sequence and preset**
 - **Board play sequence**: plays the sequence now.
+- **Board play sequence (from list)**, **Board enqueue sequence (from list)**: the same, with the sequence chosen in a list (see _Sequence lists_).
   - _Override preset_: plays this preset, instead of the preset of the sequence settings. It only works if the board has a preset board. The Preset Id is a sequence of the preset board, counted from 1. Without a preset board, the option does nothing.
   - _Clear queue_: also removes the enqueued sequence.
 - **Board play next sequence**
