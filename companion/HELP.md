@@ -19,7 +19,7 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 The connection status:
 
 - **Green**: connected, and Producer replies.
-- **Yellow, "Producer too old for variables, or Accept remote commands is off"**: Producer did not reply to `subscribe` within 2 seconds. The actions still work, but the variables stay empty, and the locates with a timecode log a warning.
+- **Yellow, "Producer version does not match this module, or Accept remote commands is off"**: Producer did not reply to `subscribe` within 2 seconds. Producer is too old, or too new for this module. The actions still work, but the variables stay empty, and the locates with a timecode log a warning.
 - **Yellow, "No reply from Producer"**: the module sends `checkalive` every 2 seconds. Producer did not reply for 5 seconds, so the module reconnects. The most common cause is _Accept remote commands_ turned off.
 - **Red** or **Connecting**: no TCP connection.
 
@@ -224,7 +224,7 @@ Action graphs:
 ### Troubleshooting
 
 - **The connection is yellow, "No reply from Producer"**, or **nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
-- **The connection is yellow, "Producer too old for variables"**: update Onlyview to get the variables, the feedbacks, the toggles and the presets of the show. The actions still work.
+- **The connection is yellow, "Producer version does not match this module"**: update Onlyview, or this module, so that they match. Then you get the variables, the feedbacks, the toggles and the presets of the show. The actions still work.
 - **A toggle does nothing, and the log says "toggle needs the state of Producer"**: Producer did not send its state. See the line above. Use On or Off instead.
 - **A variable shows `$NA`**: the timeline, board or Display does not exist in the open show, or the id is wrong.
 - **The connection is red or connecting**: check the IP address and port, and check that Producer is running. Producer opens port 3055 only while it runs.

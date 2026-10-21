@@ -300,8 +300,8 @@ test('a re-subscribe to an empty show removes the variables', async () => {
 	await cleanup()
 })
 
-test('subscribed without a valid version is an old Producer', async () => {
-	for (const line of ['subscribed', 'subscribed*0', 'subscribed*x', 'subscribed*1.5']) {
+test('subscribed with another version is not supported', async () => {
+	for (const line of ['subscribed', 'subscribed*0', 'subscribed*x', 'subscribed*1.5', 'subscribed*2']) {
 		const { instance } = await createModule({ host: '' })
 		instance.onData(Buffer.from(`${line}\ntimelinestate*1*1*0*100*0*A\n`))
 		assert.equal(instance.protocol, Protocol.Legacy, line)
@@ -309,10 +309,6 @@ test('subscribed without a valid version is an old Producer', async () => {
 		assert.equal(instance.state.timelines.size, 0, line)
 		await instance.destroy()
 	}
-	const { instance } = await createModule({ host: '' })
-	instance.onData(Buffer.from('subscribed*2\n'))
-	assert.equal(instance.protocol, Protocol.Subscribed)
-	await instance.destroy()
 })
 
 test('malformed state lines are ignored', async () => {
@@ -389,7 +385,7 @@ test('an old Producer: warning, and the actions still work', async () => {
 	assert.ok(reported.at(-1).changes.has(ChangeKind.Connection))
 	assert.equal(reported.at(-1).protocol, Protocol.Legacy)
 	assert.equal(recorded.statuses.at(-1).status, InstanceStatus.UnknownWarning)
-	assert.match(recorded.statuses.at(-1).message, /too old/)
+	assert.match(recorded.statuses.at(-1).message, /does not match/)
 	assert.equal(recorded.logs.filter((log) => /did not reply to subscribe/.test(log.message)).length, 1)
 
 	await runAction(recorded, 'timelinePlayAction', { timelineId: 3 })

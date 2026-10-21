@@ -17,7 +17,7 @@ const MAX_LINE_LENGTH = 1024 * 1024
 const SUBSCRIBE_VERSION = 1
 
 const DEFAULT_TIMING = Object.freeze({
-	// Wait this long for `subscribed`, then treat Producer as too old.
+	// Wait this long for `subscribed`, then treat Producer as too old or too new.
 	handshakeMs: 2000,
 	checkaliveMs: 2000,
 	// No line from Producer for this long: the connection is lost.
@@ -187,7 +187,7 @@ export default class ModuleInstance extends InstanceBase {
 		} else if (this.protocol === Protocol.Legacy) {
 			this.updateStatus(
 				InstanceStatus.UnknownWarning,
-				'Producer too old for variables, or "Accept remote commands" is off',
+				'Producer version does not match this module, or "Accept remote commands" is off',
 			)
 		} else {
 			this.updateStatus(InstanceStatus.Ok)
@@ -234,8 +234,8 @@ export default class ModuleInstance extends InstanceBase {
 			this.legacyLogged = true
 			this.log(
 				'warn',
-				'Producer did not reply to subscribe: it is too old for variables, or "Accept remote commands" is off. ' +
-					'The actions still work, except the locates with a timecode in frames.',
+				'Producer did not reply to subscribe: its version does not match this module, or "Accept remote commands" is off. ' +
+					'The actions still work. With an old Producer, the locates with a timecode in frames do not.',
 			)
 		}
 		this.refreshStatus()
@@ -314,9 +314,8 @@ export default class ModuleInstance extends InstanceBase {
 	onSubscribed(versionText) {
 		clearTimeout(this.handshakeTimer)
 		delete this.handshakeTimer
-		// Version 1 is the first one with the state push.
-		const version = /^\d+$/.test(versionText ?? '') ? Number(versionText) : 0
-		if (version < SUBSCRIBE_VERSION) {
+		// Producer only replies to the version it supports. An old Producer has no version.
+		if (versionText !== String(SUBSCRIBE_VERSION)) {
 			this.state.clear()
 			this.setLegacy()
 			return
