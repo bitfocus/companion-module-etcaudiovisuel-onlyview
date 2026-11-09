@@ -14,7 +14,7 @@
         }
     ],
     "runtime": {
-        "type": "node18",
+        "type": "node26",
         "api": "nodejs-ipc",
         "apiVersion": "18.16.0",
         "entrypoint": "../main.js"
