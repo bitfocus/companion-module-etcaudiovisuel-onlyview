@@ -6,7 +6,7 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 
 - Companion 4.3 or later.
 - Onlyview Producer. An action only works if your Onlyview version has the matching feature: for example, board actions need a version with boards.
-- The variables, the feedbacks, the toggles (including play/pause) and the presets made for the ids of the show need an Onlyview version that sends its state to Companion (the `subscribe` remote command). It is the same version as the timecodes in frames (see _Timecodes_). With an older Producer, the actions still work, but the variables stay empty, the feedbacks stay off, the toggles do nothing, and only the presets without state work (see _Presets_).
+- The variables, the feedbacks, the toggles (including play/pause) and the presets made for the ids of the show need Onlyview 9.5 or later. It sends its state to Companion (the `subscribe` remote command). With an older Producer, the actions still work, but the variables stay empty, the feedbacks stay off, the toggles do nothing, and only the presets without state work (see _Presets_).
 
 ### Setup
 
@@ -19,7 +19,7 @@ This module controls an [ETC Audiovisuel - Onlyview](https://etc-onlyview.com/) 
 The connection status:
 
 - **Green**: connected, and Producer replies.
-- **Yellow, "Producer version does not match this module, or Accept remote commands is off"**: Producer did not reply to `subscribe` within 2 seconds. Producer is too old, or too new for this module. The actions still work, but the variables stay empty, and the locates with a timecode log a warning.
+- **Yellow, "Producer version does not match this module, or Accept remote commands is off"**: Producer did not reply to `subscribe` within 2 seconds. Producer is older than 9.5, or too new for this module. The actions still work, but the variables stay empty, and the locates with a timecode log a warning.
 - **Yellow, "No reply from Producer"**: the module sends `checkalive` every 2 seconds. Producer did not reply for 5 seconds, so the module reconnects. The most common cause is _Accept remote commands_ turned off.
 - **Red** or **Connecting**: no TCP connection.
 
@@ -53,7 +53,7 @@ The locate actions take a timecode as text: `HH:MM:SS:FF` or `HH:MM:SS`, for exa
 
 The field accepts variables, for example `$(custom:tc)`. If the text is not a valid timecode, the module logs a warning and sends nothing.
 
-These actions need an Onlyview version that supports timecodes in frames (`tc=`). An older Producer reads `00:01:30:12` as 1 min 30 s and 12 ms. It does not understand `00:01:30` at all, and uses the current position: "Timeline locate and play" then plays from where the timeline is, with no error.
+These actions need Onlyview 9.5 or later (timecodes in frames, `tc=`). An older Producer reads `00:01:30:12` as 1 min 30 s and 12 ms. It does not understand `00:01:30` at all, and uses the current position: "Timeline locate and play" then plays from where the timeline is, with no error.
 
 ### Variables
 
@@ -224,7 +224,7 @@ Action graphs:
 ### Troubleshooting
 
 - **The connection is yellow, "No reply from Producer"**, or **nothing happens**: _Accept remote commands_ is off in Producer (see the setup, step 1).
-- **The connection is yellow, "Producer version does not match this module"**: update Onlyview, or this module, so that they match. Then you get the variables, the feedbacks, the toggles and the presets of the show. The actions still work.
+- **The connection is yellow, "Producer version does not match this module"**: update Onlyview to 9.5 or later, or update this module, so that they match. Then you get the variables, the feedbacks, the toggles and the presets of the show. The actions still work.
 - **A toggle does nothing, and the log says "toggle needs the state of Producer"**: Producer did not send its state. See the line above. Use On or Off instead.
 - **A variable shows `$NA`**: the timeline, board or Display does not exist in the open show, or the id is wrong.
 - **The connection is red or connecting**: check the IP address and port, and check that Producer is running. Producer opens port 3055 only while it runs.
