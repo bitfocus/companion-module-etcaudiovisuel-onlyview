@@ -1,5 +1,5 @@
 import { combineRgb } from '@companion-module/base'
-import { ChangeKind, ScreenStatus } from './state.js'
+import { ChangeKind, ScreenStatus, ScreenStatusText } from './state.js'
 
 export const BLACK = combineRgb(0, 0, 0)
 export const WHITE = combineRgb(255, 255, 255)
@@ -290,19 +290,21 @@ export default function UpdateFeedbacks(self) {
 					type: 'dropdown',
 					id: 'status',
 					label: 'Status',
+					// The ids are the text of `display_<id>_status`, for the expression mode.
 					choices: [
-						{ id: ScreenStatus.Connected, label: 'Connected' },
-						{ id: ScreenStatus.Offline, label: 'Offline' },
-						{ id: ScreenStatus.Error, label: 'Error' },
-						{ id: ScreenStatus.Connecting, label: 'Connecting' },
-						{ id: ScreenStatus.Idle, label: 'Idle' },
-					],
-					default: ScreenStatus.Connected,
+						ScreenStatus.Connected,
+						ScreenStatus.Offline,
+						ScreenStatus.Error,
+						ScreenStatus.Connecting,
+						ScreenStatus.Idle,
+					].map((status) => ({ id: ScreenStatusText[status], label: ScreenStatusText[status] })),
+					default: ScreenStatusText[ScreenStatus.Connected],
+					expressionDescription: 'Connected, Offline, Error, Connecting or Idle',
 				},
 			],
 			callback: (fb) => {
-				const status = findScreen(state, fb.options.displayId)?.status
-				return status !== undefined && status === Number(fb.options.status)
+				const text = ScreenStatusText[findScreen(state, fb.options.displayId)?.status]
+				return text !== undefined && text.toLowerCase() === String(fb.options.status).trim().toLowerCase()
 			},
 		},
 	})

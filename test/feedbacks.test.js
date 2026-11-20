@@ -83,12 +83,15 @@ const CASES = [
 	[FeedbackId.BoardLayerBlind, { boardId: 1, layerId: 9 }, false],
 	[FeedbackId.BoardLayerSolo, { boardId: 1, layerId: 2 }, true],
 	[FeedbackId.BoardLayerSolo, { boardId: 1, layerId: 1 }, false],
-	[FeedbackId.DisplayStatus, { displayId: 1, status: 3 }, true],
-	[FeedbackId.DisplayStatus, { displayId: 1, status: 1 }, false],
-	[FeedbackId.DisplayStatus, { displayId: 2, status: 1 }, true],
-	[FeedbackId.DisplayStatus, { displayId: 2, status: 3 }, false],
-	[FeedbackId.DisplayStatus, { displayId: 3, status: 4 }, true],
-	[FeedbackId.DisplayStatus, { displayId: 9, status: 0 }, false],
+	[FeedbackId.DisplayStatus, { displayId: 1, status: 'Connected' }, true],
+	[FeedbackId.DisplayStatus, { displayId: 1, status: 'Offline' }, false],
+	[FeedbackId.DisplayStatus, { displayId: 2, status: 'Offline' }, true],
+	[FeedbackId.DisplayStatus, { displayId: 2, status: 'Connected' }, false],
+	[FeedbackId.DisplayStatus, { displayId: 3, status: 'Error' }, true],
+	[FeedbackId.DisplayStatus, { displayId: 9, status: 'Idle' }, false],
+	// The expression mode gives the text of display_<id>_status, or what the user types.
+	[FeedbackId.DisplayStatus, { displayId: 1, status: ' connected ' }, true],
+	[FeedbackId.DisplayStatus, { displayId: 1, status: 3 }, false],
 ]
 
 test('every feedback is a boolean feedback with a default style', async () => {
@@ -151,14 +154,14 @@ test('feedbacks follow the state changes', async () => {
 	assert.equal(check(recorded, FeedbackId.BoardEnqueuedSequence, { boardId: 1, sequenceId: 5 }), false)
 	assert.equal(check(recorded, FeedbackId.BoardLayerBlind, { boardId: 1, layerId: 1 }), false)
 	assert.equal(check(recorded, FeedbackId.BoardLayerSolo, { boardId: 1, layerId: 1 }), true)
-	assert.equal(check(recorded, FeedbackId.DisplayStatus, { displayId: 1, status: 4 }), true)
+	assert.equal(check(recorded, FeedbackId.DisplayStatus, { displayId: 1, status: 'Error' }), true)
 
 	// After a structure change, Producer resends the full state: a missing object is false.
 	instance.onData(Buffer.from('subscribed*1\n'))
 	assert.equal(check(recorded, FeedbackId.TimelinePaused, { timelineId: 1 }), false)
 	assert.equal(check(recorded, FeedbackId.TimelineLayerSolo, { timelineId: 1, layerType: 1, layerId: 1 }), false)
 	assert.equal(check(recorded, FeedbackId.BoardPaused, { boardId: 1 }), false)
-	assert.equal(check(recorded, FeedbackId.DisplayStatus, { displayId: 1, status: 4 }), false)
+	assert.equal(check(recorded, FeedbackId.DisplayStatus, { displayId: 1, status: 'Error' }), false)
 	await instance.destroy()
 })
 

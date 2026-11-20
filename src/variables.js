@@ -1,19 +1,11 @@
 // Variable definitions and values, computed from the subscription state.
 // The names are public: users type them in buttons. Do not rename them.
-import { ScreenStatus } from './state.js'
+import { ScreenStatusText } from './state.js'
 import { formatCountdown, formatTimecode, formatTimecodeHms } from './timecode.js'
 
 // A frozen clock must never look live.
 const BLANK_TC = '--:--:--:--'
 const BLANK_TC_HMS = '--:--:--'
-
-const SCREEN_STATUS_TEXT = {
-	[ScreenStatus.Idle]: 'Idle',
-	[ScreenStatus.Offline]: 'Offline',
-	[ScreenStatus.Connecting]: 'Connecting',
-	[ScreenStatus.Connected]: 'Connected',
-	[ScreenStatus.Error]: 'Error',
-}
 
 function label(kind, id, name) {
 	return name ? `${kind} ${id} (${name})` : `${kind} ${id}`
@@ -132,7 +124,7 @@ export function variableValues(state, objects, now) {
 	for (const id of objects.screens) {
 		const s = state.screens.get(id)
 		values[`display_${id}_name`] = s ? s.name : ''
-		values[`display_${id}_status`] = s ? (SCREEN_STATUS_TEXT[s.status] ?? '') : ''
+		values[`display_${id}_status`] = s ? (ScreenStatusText[s.status] ?? '') : ''
 	}
 
 	for (const id of objects.quickkeys) values[`quickkey_${id}_name`] = state.quickkeys.get(id)?.name ?? ''

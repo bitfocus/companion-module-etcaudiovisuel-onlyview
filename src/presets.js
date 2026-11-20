@@ -1,7 +1,7 @@
 // Ready-made buttons. They are built from the ids of the open show, and
 // fall back to id 1 when Producer did not send any object of a kind.
 import { BLACK, BLUE, FeedbackId, GREEN, ORANGE, RED, WHITE, YELLOW } from './feedbacks.js'
-import { ScreenStatus } from './state.js'
+import { ScreenStatus, ScreenStatusText } from './state.js'
 import { StateMode } from './upgrades.js'
 
 // Quick key buttons when Producer did not send any quick key.
@@ -193,7 +193,7 @@ export function presetDefinitions(model, label) {
 		const options = { displayId: id }
 		const status = (value, bgcolor, color) => ({
 			feedbackId: FeedbackId.DisplayStatus,
-			options: { ...options, status: value },
+			options: { ...options, status: ScreenStatusText[value] },
 			style: fbStyle(bgcolor, color),
 		})
 		return add(

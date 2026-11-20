@@ -133,7 +133,7 @@ All the feedbacks are boolean: they change the style of the button when they are
 - **Board enqueued sequence is**: the sequence plays after the current one.
 - **Board current sequence is (from list)**, **Board enqueued sequence is (from list)**: the same, with the sequence chosen in a list (see _Sequence lists_).
 - **Board layer is OFF (blind)** / **Board layer is solo**: Board Id and layer, counted from 1.
-- **Display status is**: Display Id and a status: Connected, Offline, Error, Connecting or Idle. It matches `display_<id>_status`.
+- **Display status is**: Display Id and a status: Connected, Offline, Error, Connecting or Idle. It matches `display_<id>_status`. In expression mode, the status is that text, for example `$(onlyview:display_1_status)` or `Connected`.
 
 ### On, Off and Toggle
 

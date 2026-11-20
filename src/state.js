@@ -29,6 +29,15 @@ export const PlayState = Object.freeze({ Pause: 0, Play: 1 })
 // _StatusScreen in Onlyview
 export const ScreenStatus = Object.freeze({ Idle: 0, Offline: 1, Connecting: 2, Connected: 3, Error: 4 })
 
+// The text of `display_<id>_status`, like the Displays tab of Producer.
+export const ScreenStatusText = Object.freeze({
+	[ScreenStatus.Idle]: 'Idle',
+	[ScreenStatus.Offline]: 'Offline',
+	[ScreenStatus.Connecting]: 'Connecting',
+	[ScreenStatus.Connected]: 'Connected',
+	[ScreenStatus.Error]: 'Error',
+})
+
 function toInt(text) {
 	return /^-?\d+$/.test(text ?? '') ? Number(text) : undefined
 }
