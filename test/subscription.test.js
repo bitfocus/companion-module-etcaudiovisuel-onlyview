@@ -274,6 +274,23 @@ test('state changes are reported by kind, for the feedbacks', async () => {
 	await instance.destroy()
 })
 
+test('a disconnection reports a change only when there was a state', async () => {
+	const { instance } = await createModule({ host: '' })
+	const reported = []
+	instance.stateChanged = (changes) => reported.push([...changes].sort())
+	instance.onDisconnected()
+	// Reconnect attempts: the state is already empty.
+	const count = reported.length
+	instance.onDisconnected()
+	instance.onDisconnected()
+	assert.equal(reported.length, count)
+	instance.onData(Buffer.from('subscribed*1\nscreenstate*4*3*\n'))
+	instance.onDisconnected()
+	assert.ok(reported.at(-1).includes(ChangeKind.Screen))
+	assert.ok(reported.at(-1).includes(ChangeKind.Connection))
+	await instance.destroy()
+})
+
 test('an empty sequence shows 00:00:00, like Producer', async () => {
 	const { instance, recorded } = await createModule({ host: '' })
 	instance.onData(Buffer.from('subscribed*1\nshowframerate*25\nboardstate*1*1*0*100*1*0*-1*-1*0*\n'))

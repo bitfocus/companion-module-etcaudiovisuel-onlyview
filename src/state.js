@@ -77,14 +77,25 @@ export class OnlyviewState {
 	}
 
 	// Drops everything. Every kind is reported, so dependent values go blank.
+	// An empty state reports nothing: reconnect attempts call it every 2 s.
 	clear() {
-		for (const kind of Object.values(ChangeKind)) this.changes.add(kind)
+		if (!this.isEmpty()) this.reportAll()
 		this.reset()
+	}
+
+	reportAll() {
+		for (const kind of Object.values(ChangeKind)) this.changes.add(kind)
+	}
+
+	isEmpty() {
+		const maps = [this.timelines, this.boards, this.screens, this.quickkeys]
+		return !this.subscribed && this.fps === undefined && maps.every((map) => map.size === 0)
 	}
 
 	// Called on `subscribed`: Producer resends a full snapshot after it.
 	startSubscription() {
-		this.clear()
+		this.reportAll()
+		this.reset()
 		this.subscribed = true
 	}
 
