@@ -123,3 +123,38 @@ test('the mode upgrade keeps an existing mode and other actions', () => {
 	assert.deepEqual(actions[3].options.state, { isExpression: false, value: true })
 	assert.ok(!('mode' in actions[4].options))
 })
+
+const renameBaoardId = UpgradeScripts[2]
+
+test('the 1.0.2 baoardId becomes boardId', () => {
+	const actions = [
+		action('boardGrandMasterAction', {
+			baoardId: { isExpression: false, value: '4' },
+			value: { isExpression: false, value: 50 },
+			fadeTime: { isExpression: false, value: 2 },
+		}),
+		action('boardGrandMasterAction', { baoardId: { isExpression: false, value: '$(internal:custom_board)' } }),
+	]
+	runAll(actions)
+	assert.deepEqual(actions[0].options, {
+		boardId: { isExpression: false, value: 4 },
+		value: { isExpression: false, value: 50 },
+		fadeTime: { isExpression: false, value: 2 },
+	})
+	assert.deepEqual(actions[1].options, { boardId: { isExpression: true, value: '$(internal:custom_board)' } })
+})
+
+test('the baoardId rename keeps an existing boardId and other actions', () => {
+	const actions = [
+		action('boardGrandMasterAction', {
+			boardId: { isExpression: false, value: 2 },
+			baoardId: { isExpression: false, value: 4 },
+		}),
+		action('boardGrandMasterAction', { boardId: { isExpression: false, value: 3 } }),
+		action('otherAction', { baoardId: { isExpression: false, value: 4 } }),
+	]
+	const result = renameBaoardId({ currentConfig: {} }, { config: null, secrets: null, actions, feedbacks: [] })
+	assert.deepEqual(result.updatedActions, [actions[0]])
+	assert.deepEqual(actions[0].options, { boardId: { isExpression: false, value: 2 } })
+	assert.deepEqual(actions[2].options.baoardId, { isExpression: false, value: 4 })
+})

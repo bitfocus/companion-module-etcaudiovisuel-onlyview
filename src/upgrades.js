@@ -100,5 +100,24 @@ function upgradeStateToMode(_context, props) {
 	}
 }
 
+// Board grand master saved its Board Id as `baoardId` up to 1.0.2. It is a
+// separate script, because 2.0.0 configs already ran the first two.
+function renameBaoardId(_context, props) {
+	const updatedActions = []
+
+	for (const action of props.actions) {
+		if (action.actionId !== 'boardGrandMasterAction' || action.options.baoardId === undefined) continue
+		if (action.options.boardId === undefined) action.options.boardId = action.options.baoardId
+		delete action.options.baoardId
+		updatedActions.push(action)
+	}
+
+	return {
+		updatedConfig: null,
+		updatedActions,
+		updatedFeedbacks: [],
+	}
+}
+
 // Once a script has been added it cannot be removed.
-export const UpgradeScripts = [upgradeToExpressions, upgradeStateToMode]
+export const UpgradeScripts = [upgradeToExpressions, upgradeStateToMode, renameBaoardId]

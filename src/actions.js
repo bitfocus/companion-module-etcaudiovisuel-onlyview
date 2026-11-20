@@ -622,7 +622,7 @@ export default function (self) {
 				numberOption('fadeTime', 'Fade time (seconds)', 0, 99, 0),
 			],
 			callback: async (action) => {
-				// Buttons saved before the baoardId rename have no boardId.
+				// The Board Id can be empty, or an expression that is not a number.
 				const boardId = Number(action.options.boardId)
 				if (!Number.isInteger(boardId) || boardId < 1) {
 					self.log('warn', 'Board grand master: invalid Board Id, set it again in the button')
