@@ -2,7 +2,12 @@
     "name": "onlyview",
     "version": "2.0.0",
     "description": "Control and monitor Onlyview media servers (timelines, boards, displays)",
-    "keywords": ["Media Server", "Video", "Show Control", "Onlyview"],
+    "keywords": [
+        "Media Server",
+        "Video",
+        "Show Control",
+        "Onlyview"
+    ],
     "type": "module",
     "main": "main.js",
     "scripts": {
@@ -17,7 +22,8 @@
         "url": "git+https://github.com/bitfocus/companion-module-etcaudiovisuel-onlyview.git"
     },
     "engines": {
-        "node": "^22.20"
+        "node": "^22.20",
+        "yarn": "^4"
     },
     "dependencies": {
         "@companion-module/base": "~2.0.4"
@@ -26,5 +32,6 @@
         "@companion-module/tools": "^3.1.0",
         "prettier": "^3.8.3"
     },
-    "prettier": "@companion-module/tools/.prettierrc.json"
+    "prettier": "@companion-module/tools/.prettierrc.json",
+    "packageManager": "yarn@4.17.0"
 }
