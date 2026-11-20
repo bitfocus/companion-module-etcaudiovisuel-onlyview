@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
-import { msToHmsf, hmsfToMs, formatTimecode, formatTimecodeHms, formatCountdown } from '../timecode.js'
+import { msToHmsf, hmsfToMs, formatTimecode, formatTimecodeHms, formatCountdown } from '../src/timecode.js'
 
 const hmsf = (hour, minute, second, frame) => ({ hour, minute, second, frame })
 

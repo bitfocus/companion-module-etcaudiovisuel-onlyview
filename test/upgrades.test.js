@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { UpgradeScripts } from '../main.js'
+import { UpgradeScripts } from '../src/main.js'
 
 const [upgradeToExpressions] = UpgradeScripts
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { InstanceStatus } from '@companion-module/base'
 import { createModule, runAction } from './helpers/fake-context.js'
 import { startFakeProducer, waitFor } from './helpers/fake-producer.js'
-import { ChangeKind, Protocol } from '../state.js'
+import { ChangeKind, Protocol } from '../src/state.js'
 
 const FAST_TIMING = {
 	handshakeMs: 200,

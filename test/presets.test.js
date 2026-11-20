@@ -2,9 +2,9 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createModule } from './helpers/fake-context.js'
 import { waitFor } from './helpers/fake-producer.js'
-import { QUICKKEY_PRESET_COUNT } from '../presets.js'
-import { OnlyviewState } from '../state.js'
-import { variableDefinitions } from '../variables.js'
+import { QUICKKEY_PRESET_COUNT } from '../src/presets.js'
+import { OnlyviewState } from '../src/state.js'
+import { variableDefinitions } from '../src/variables.js'
 
 const SNAPSHOT = [
 	'showframerate*25',

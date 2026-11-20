@@ -2,8 +2,8 @@ import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { createModule, runAction } from './helpers/fake-context.js'
 import { startFakeProducer, waitFor } from './helpers/fake-producer.js'
-import { NUMERIC_OPTION_IDS, BOOLEAN_OPTION_IDS, STATE_ACTION_IDS, StateMode } from '../upgrades.js'
-import { Protocol } from '../state.js'
+import { NUMERIC_OPTION_IDS, BOOLEAN_OPTION_IDS, STATE_ACTION_IDS, StateMode } from '../src/upgrades.js'
+import { Protocol } from '../src/state.js'
 
 let producer
 let instance

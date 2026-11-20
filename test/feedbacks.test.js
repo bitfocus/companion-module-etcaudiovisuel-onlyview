@@ -2,8 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createModule } from './helpers/fake-context.js'
 import { startFakeProducer, waitFor } from './helpers/fake-producer.js'
-import { ChangeKind, Protocol } from '../state.js'
-import { FeedbackId, FEEDBACKS_BY_CHANGE, feedbacksForChanges } from '../feedbacks.js'
+import { ChangeKind, Protocol } from '../src/state.js'
+import { FeedbackId, FEEDBACKS_BY_CHANGE, feedbacksForChanges } from '../src/feedbacks.js'
 
 // Timeline 1 plays, timeline 2 is paused and OFF. Board 1 plays sequence 3, sequence 5 is enqueued.
 const SNAPSHOT = [

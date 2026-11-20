@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createModule, runAction } from './helpers/fake-context.js'
 import { startFakeProducer, waitFor } from './helpers/fake-producer.js'
-import { Protocol } from '../state.js'
+import { Protocol } from '../src/state.js'
 
 // Each object exists twice: once in each state.
 const SNAPSHOT = [

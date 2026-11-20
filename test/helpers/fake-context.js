@@ -1,4 +1,4 @@
-import ModuleInstance from '../../main.js'
+import ModuleInstance from '../../src/main.js'
 
 // Minimal stand-in for the context that Companion passes to the module.
 // It records what the module reports, so tests can check it.
